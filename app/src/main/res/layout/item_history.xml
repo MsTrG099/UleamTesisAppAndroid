@@ -4,63 +4,63 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="4dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="4dp"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@android:color/white"
     android:foreground="?android:attr/selectableItemBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="12dp">
+        android:padding="16dp">
 
-        <!-- Header: Fecha y Modo -->
+        <!-- Header: Icono y fecha -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="8dp">
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🕐"
+                android:textSize="20sp"
+                android:layout_marginEnd="8dp"/>
 
             <TextView
                 android:id="@+id/tvDate"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="01/01/2024 10:30:00"
-                android:textSize="12sp"
-                android:textColor="@android:color/darker_gray"/>
+                android:text="19/11/2025, 10:45 p. m."
+                android:textSize="13sp"
+                android:textColor="#757575"/>
 
-            <TextView
-                android:id="@+id/tvMode"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="ONLINE"
-                android:textSize="10sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
-                android:background="@android:color/holo_green_dark"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp"
-                android:layout_marginStart="8dp"/>
+            <ImageButton
+                android:id="@+id/btnDelete"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@android:drawable/ic_menu_delete"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Eliminar"
+                android:tint="#F44336"/>
         </LinearLayout>
 
-        <!-- Preview del texto -->
+        <!-- Texto de vista previa -->
         <TextView
             android:id="@+id/tvPreview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Esta es una vista previa del texto transcrito..."
-            android:textSize="14sp"
-            android:textColor="@android:color/black"
-            android:maxLines="2"
-            android:ellipsize="end"
-            android:layout_marginBottom="8dp"/>
+            android:text="Ejemplo de transcripción de audio."
+            android:textSize="15sp"
+            android:textColor="#212121"
+            android:layout_marginBottom="12dp"/>
 
-        <!-- Footer: Metadata y botones -->
+        <!-- Footer: metadata -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -68,32 +68,65 @@
             android:gravity="center_vertical">
 
             <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⏱️"
+                android:textSize="14sp"
+                android:layout_marginEnd="4dp"/>
+
+            <TextView
                 android:id="@+id/tvMetadata"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="150 palabras • 02:30"
-                android:textSize="12sp"
-                android:textColor="@android:color/darker_gray"/>
+                android:text="4s"
+                android:textSize="13sp"
+                android:textColor="#757575"/>
 
-            <ImageButton
-                android:id="@+id/btnCopy"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@android:drawable/ic_menu_share"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Copiar"
-                android:tint="@android:color/holo_blue_dark"/>
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="#E3F2FD"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp">
 
-            <ImageButton
-                android:id="@+id/btnDelete"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@android:drawable/ic_menu_delete"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Eliminar"
-                android:tint="@android:color/holo_red_dark"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🎯"
+                    android:textSize="12sp"
+                    android:layout_marginEnd="4dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="98%"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="#1E88E5"/>
+            </LinearLayout>
         </LinearLayout>
-
     </LinearLayout>
+
+    <!-- Elementos ocultos para compatibilidad -->
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tvMode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <ImageButton
+            android:id="@+id/btnCopy"
+            android:layout_width="32dp"
+            android:layout_height="32dp"/>
+    </FrameLayout>
+
 </androidx.cardview.widget.CardView>

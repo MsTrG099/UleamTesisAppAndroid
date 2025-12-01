@@ -3,6 +3,7 @@ package com.example.speachtotext
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -20,10 +21,9 @@ class HistoryActivity : AppCompatActivity() {
     private lateinit var btnBack: ImageButton
     private lateinit var recyclerView: RecyclerView
     private lateinit var tvEmptyState: TextView
-    private lateinit var tvStats: TextView
-    private lateinit var btnClearAll: Button
-    private lateinit var searchView: SearchView
-    private lateinit var spinnerFilter: Spinner
+    private var btnBottomHome: View? = null
+    private var btnBottomHistory: View? = null
+    private var btnBottomSettings: View? = null
 
     private lateinit var database: TranscriptionDatabase
     private lateinit var adapter: HistoryAdapter
@@ -39,23 +39,20 @@ class HistoryActivity : AppCompatActivity() {
         setupRecyclerView()
         setupListeners()
         loadHistory()
-        updateStatistics()
     }
 
     private fun initViews() {
         btnBack = findViewById(R.id.btnBack)
         recyclerView = findViewById(R.id.recyclerViewHistory)
         tvEmptyState = findViewById(R.id.tvEmptyState)
-        tvStats = findViewById(R.id.tvStats)
-        btnClearAll = findViewById(R.id.btnClearAll)
-        searchView = findViewById(R.id.searchView)
-        spinnerFilter = findViewById(R.id.spinnerFilter)
+        btnBottomHome = findViewById(R.id.btnBottomHome)
+        btnBottomHistory = findViewById(R.id.btnBottomHistory)
+        btnBottomSettings = findViewById(R.id.btnBottomSettings)
     }
 
     private fun setupRecyclerView() {
         adapter = HistoryAdapter(
             onItemClick = { record -> showDetailDialog(record) },
-            onCopyClick = { record -> copyToClipboard(record.text) },
             onDeleteClick = { record -> deleteRecord(record) }
         )
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -65,69 +62,20 @@ class HistoryActivity : AppCompatActivity() {
     private fun setupListeners() {
         btnBack.setOnClickListener { finish() }
 
-        btnClearAll.setOnClickListener {
-            showClearAllDialog()
+        btnBottomHome?.setOnClickListener {
+            finish()
         }
 
-        // Filtro por modo
-        val filterOptions = arrayOf("Todos", "Online", "Offline")
-        spinnerFilter.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, filterOptions)
-        spinnerFilter.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                filterRecords(position)
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        btnBottomSettings?.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+            finish()
         }
-
-        // Búsqueda
-        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                searchRecords(query ?: "")
-                return true
-            }
-
-            override fun onQueryTextChange(newText: String?): Boolean {
-                if (newText.isNullOrEmpty()) {
-                    loadHistory()
-                } else {
-                    searchRecords(newText)
-                }
-                return true
-            }
-        })
     }
 
     private fun loadHistory() {
         allRecords = database.getAllTranscriptions()
         adapter.submitList(allRecords)
         updateEmptyState()
-    }
-
-    private fun filterRecords(filterPosition: Int) {
-        val filteredRecords = when (filterPosition) {
-            0 -> allRecords // Todos
-            1 -> allRecords.filter { it.mode == "online" } // Online
-            2 -> allRecords.filter { it.mode == "offline" } // Offline
-            else -> allRecords
-        }
-        adapter.submitList(filteredRecords)
-    }
-
-    private fun searchRecords(query: String) {
-        val searchResults = database.searchTranscriptions(query)
-        adapter.submitList(searchResults)
-        updateEmptyState()
-    }
-
-    private fun updateStatistics() {
-        val stats = database.getStatistics()
-        tvStats.text = """
-            📊 Estadísticas
-            • Total: ${stats.totalCount} transcripciones
-            • Palabras: ${stats.totalWords} (promedio: ${stats.avgWords.toInt()})
-            • Duración: ${stats.getFormattedTotalDuration()}
-            • Online: ${stats.onlineCount} | Offline: ${stats.offlineCount}
-        """.trimIndent()
     }
 
     private fun updateEmptyState() {
@@ -149,7 +97,6 @@ class HistoryActivity : AppCompatActivity() {
                 📊 Palabras: ${record.wordCount}
                 🌐 Modo: ${record.mode.uppercase()}
                 ${if (record.language != null) "🗣️ Idioma: ${record.language}" else ""}
-                ${if (record.sampleRate != null) "🎙️ Sample Rate: ${record.sampleRate} Hz" else ""}
                 
                 📄 Texto completo:
                 ${record.text}
@@ -175,21 +122,6 @@ class HistoryActivity : AppCompatActivity() {
                 database.deleteTranscription(record.id)
                 Toast.makeText(this, "✓ Transcripción eliminada", Toast.LENGTH_SHORT).show()
                 loadHistory()
-                updateStatistics()
-            }
-            .setNegativeButton("Cancelar", null)
-            .show()
-    }
-
-    private fun showClearAllDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("⚠️ Eliminar todo el historial")
-            .setMessage("¿Estás seguro? Esta acción no se puede deshacer.")
-            .setPositiveButton("Eliminar todo") { _, _ ->
-                val count = database.deleteAllTranscriptions()
-                Toast.makeText(this, "✓ $count transcripciones eliminadas", Toast.LENGTH_SHORT).show()
-                loadHistory()
-                updateStatistics()
             }
             .setNegativeButton("Cancelar", null)
             .show()
@@ -197,11 +129,10 @@ class HistoryActivity : AppCompatActivity() {
 }
 
 /**
- * Adapter para el RecyclerView del historial
+ * Adapter actualizado para el nuevo diseño
  */
 class HistoryAdapter(
     private val onItemClick: (TranscriptionRecord) -> Unit,
-    private val onCopyClick: (TranscriptionRecord) -> Unit,
     private val onDeleteClick: (TranscriptionRecord) -> Unit
 ) : RecyclerView.Adapter<HistoryAdapter.ViewHolder>() {
 
@@ -228,26 +159,14 @@ class HistoryAdapter(
         private val tvDate: TextView = itemView.findViewById(R.id.tvDate)
         private val tvPreview: TextView = itemView.findViewById(R.id.tvPreview)
         private val tvMetadata: TextView = itemView.findViewById(R.id.tvMetadata)
-        private val tvMode: TextView = itemView.findViewById(R.id.tvMode)
-        private val btnCopy: ImageButton = itemView.findViewById(R.id.btnCopy)
         private val btnDelete: ImageButton = itemView.findViewById(R.id.btnDelete)
 
         fun bind(record: TranscriptionRecord) {
             tvDate.text = record.getFormattedDate()
-            tvPreview.text = record.getPreviewText(80)
-            tvMetadata.text = "${record.wordCount} palabras • ${record.getFormattedDuration()}"
-
-            // Modo con color
-            tvMode.text = record.mode.uppercase()
-            tvMode.setBackgroundColor(
-                if (record.mode == "online")
-                    android.graphics.Color.parseColor("#4CAF50")
-                else
-                    android.graphics.Color.parseColor("#FF9800")
-            )
+            tvPreview.text = record.text
+            tvMetadata.text = record.getFormattedDuration()
 
             itemView.setOnClickListener { onItemClick(record) }
-            btnCopy.setOnClickListener { onCopyClick(record) }
             btnDelete.setOnClickListener { onDeleteClick(record) }
         }
     }

@@ -1,199 +1,203 @@
 package com.example.speachtotext
 
+import android.content.Intent
 import android.os.Bundle
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.ImageButton
-import android.widget.Spinner
-import android.widget.Switch
-import android.widget.TextView
-import android.widget.Toast
+import android.view.View
+import android.widget.*
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
 
 class SettingsActivity : AppCompatActivity() {
 
-    // Views - Configuración de Audio
+    // Views
     private lateinit var btnBack: ImageButton
-    private lateinit var spinnerSampleRate: Spinner
-    private lateinit var spinnerAudioSource: Spinner
-    private lateinit var spinnerChannelConfig: Spinner
-    private lateinit var spinnerAudioEncoding: Spinner
-    private lateinit var spinnerBufferSize: Spinner
-
-    // Switches - Efectos de Audio
-    private lateinit var switchAGC: Switch
-    private lateinit var switchNoiseSuppressor: Switch
-    private lateinit var switchEchoCanceler: Switch
-
-    // Configuración de Reconocimiento
+    private lateinit var cardSilent: CardView
+    private lateinit var cardModerate: CardView
+    private lateinit var cardNoisy: CardView
+    private lateinit var cardOutdoor: CardView
+    private lateinit var checkSilent: ImageView
+    private lateinit var checkModerate: ImageView
+    private lateinit var checkNoisy: ImageView
+    private lateinit var checkOutdoor: ImageView
     private lateinit var spinnerLanguage: Spinner
-    private lateinit var switchPartialResults: Switch
-    private lateinit var switchContinuousRecognition: Switch
-    private lateinit var spinnerMaxResults: Spinner
-
-    // Configuración de Modo
-    private lateinit var switchAutoModeSwitch: Switch
-    private lateinit var switchPreferOnline: Switch
-
-    // Configuración de UI
     private lateinit var switchVibration: Switch
     private lateinit var switchSoundFeedback: Switch
+    private lateinit var tvSelectedProfile: TextView
 
-    // Botones
-    private lateinit var btnSave: Button
-    private lateinit var btnRestoreDefaults: Button
-    private lateinit var tvInfo: TextView
+    // Navegación inferior
+    private var btnBottomHome: View? = null
+    private var btnBottomHistory: View? = null
+
+    // Perfil seleccionado
+    private var selectedProfile = "moderate"
+
+    // Perfiles de configuración
+    data class AudioProfile(
+        val sampleRate: Int,
+        val audioSource: Int,
+        val channelConfig: Int,
+        val audioEncoding: Int,
+        val bufferSize: Int,
+        val agc: Boolean,
+        val noiseSuppressor: Boolean,
+        val echoCanceler: Boolean,
+        val partialResults: Boolean,
+        val continuousRecognition: Boolean,
+        val maxResults: Int,
+        val autoModeSwitch: Boolean,
+        val preferOnline: Boolean
+    )
+
+    private val profiles = mapOf(
+        "silent" to AudioProfile(
+            sampleRate = 3, audioSource = 1, channelConfig = 0,
+            audioEncoding = 1, bufferSize = 1, agc = false,
+            noiseSuppressor = false, echoCanceler = false,
+            partialResults = true, continuousRecognition = false,
+            maxResults = 1, autoModeSwitch = true, preferOnline = true
+        ),
+        "moderate" to AudioProfile(
+            sampleRate = 1, audioSource = 2, channelConfig = 0,
+            audioEncoding = 1, bufferSize = 1, agc = true,
+            noiseSuppressor = true, echoCanceler = false,
+            partialResults = true, continuousRecognition = false,
+            maxResults = 1, autoModeSwitch = true, preferOnline = true
+        ),
+        "noisy" to AudioProfile(
+            sampleRate = 1, audioSource = 2, channelConfig = 0,
+            audioEncoding = 1, bufferSize = 2, agc = true,
+            noiseSuppressor = true, echoCanceler = true,
+            partialResults = true, continuousRecognition = false,
+            maxResults = 1, autoModeSwitch = true, preferOnline = true
+        ),
+        "outdoor" to AudioProfile(
+            sampleRate = 1, audioSource = 3, channelConfig = 0,
+            audioEncoding = 1, bufferSize = 2, agc = true,
+            noiseSuppressor = true, echoCanceler = true,
+            partialResults = true, continuousRecognition = false,
+            maxResults = 1, autoModeSwitch = true, preferOnline = true
+        )
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
 
         initViews()
-        setupSpinners()
+        setupLanguageSpinner()
         loadSettings()
         setupListeners()
+        setupBackPressHandler()
     }
 
     private fun initViews() {
         btnBack = findViewById(R.id.btnBack)
-
-        // Audio básico
-        spinnerSampleRate = findViewById(R.id.spinnerSampleRate)
-        spinnerAudioSource = findViewById(R.id.spinnerAudioSource)
-        spinnerChannelConfig = findViewById(R.id.spinnerChannelConfig)
-        spinnerAudioEncoding = findViewById(R.id.spinnerAudioEncoding)
-        spinnerBufferSize = findViewById(R.id.spinnerBufferSize)
-
-        // Efectos de audio
-        switchAGC = findViewById(R.id.switchAGC)
-        switchNoiseSuppressor = findViewById(R.id.switchNoiseSuppressor)
-        switchEchoCanceler = findViewById(R.id.switchEchoCanceler)
-
-        // Reconocimiento
+        cardSilent = findViewById(R.id.cardSilent)
+        cardModerate = findViewById(R.id.cardModerate)
+        cardNoisy = findViewById(R.id.cardNoisy)
+        cardOutdoor = findViewById(R.id.cardOutdoor)
+        checkSilent = findViewById(R.id.checkSilent)
+        checkModerate = findViewById(R.id.checkModerate)
+        checkNoisy = findViewById(R.id.checkNoisy)
+        checkOutdoor = findViewById(R.id.checkOutdoor)
         spinnerLanguage = findViewById(R.id.spinnerLanguage)
-        switchPartialResults = findViewById(R.id.switchPartialResults)
-        switchContinuousRecognition = findViewById(R.id.switchContinuousRecognition)
-        spinnerMaxResults = findViewById(R.id.spinnerMaxResults)
-
-        // Modo
-        switchAutoModeSwitch = findViewById(R.id.switchAutoModeSwitch)
-        switchPreferOnline = findViewById(R.id.switchPreferOnline)
-
-        // UI
         switchVibration = findViewById(R.id.switchVibration)
         switchSoundFeedback = findViewById(R.id.switchSoundFeedback)
+        tvSelectedProfile = findViewById(R.id.tvSelectedProfile)
 
-        // Botones
-        btnSave = findViewById(R.id.btnSave)
-        btnRestoreDefaults = findViewById(R.id.btnRestoreDefaults)
-        tvInfo = findViewById(R.id.tvInfo)
+        btnBottomHome = findViewById(R.id.btnBottomHome)
+        btnBottomHistory = findViewById(R.id.btnBottomHistory)
     }
 
-    private fun setupSpinners() {
-        // Sample Rate
-        val sampleRates = arrayOf(
-            "8000 Hz - Calidad Teléfono",
-            "16000 Hz - Reconocimiento Voz (Recomendado)",
-            "22050 Hz - Calidad Media",
-            "44100 Hz - Calidad CD",
-            "48000 Hz - Calidad Profesional"
-        )
-        spinnerSampleRate.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, sampleRates)
-
-        // Audio Source
-        val audioSources = arrayOf(
-            "DEFAULT - Por defecto",
-            "MIC - Micrófono estándar",
-            "VOICE_RECOGNITION - Optimizado para voz (Recomendado)",
-            "VOICE_COMMUNICATION - Llamadas (cancela eco)",
-            "CAMCORDER - Para video (estéreo)",
-            "UNPROCESSED - Sin procesamiento (raw)"
-        )
-        spinnerAudioSource.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, audioSources)
-
-        // Channel Configuration
-        val channels = arrayOf(
-            "MONO - 1 canal (Recomendado para voz)",
-            "STEREO - 2 canales (Música)"
-        )
-        spinnerChannelConfig.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, channels)
-
-        // Audio Encoding
-        val encodings = arrayOf(
-            "PCM_8BIT - 8 bits (Baja calidad)",
-            "PCM_16BIT - 16 bits (Estándar)",
-            "PCM_FLOAT - 32 bits float (Alta precisión)"
-        )
-        spinnerAudioEncoding.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, encodings)
-
-        // Buffer Size
-        val bufferSizes = arrayOf(
-            "Mínimo x1 - Menor latencia",
-            "Mínimo x2 - Recomendado",
-            "Mínimo x3 - Más estable",
-            "Mínimo x4 - Máxima estabilidad"
-        )
-        spinnerBufferSize.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, bufferSizes)
-
-        // Language
+    private fun setupLanguageSpinner() {
         val languages = arrayOf(
-            "es-ES - Español (España)",
-            "es-MX - Español (México)",
-            "es-AR - Español (Argentina)",
-            "es-CO - Español (Colombia)"
+            "🇪🇸 Español (España)",
+            "🇲🇽 Español (México)",
+            "🇦🇷 Español (Argentina)",
+            "🇨🇴 Español (Colombia)"
         )
         spinnerLanguage.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, languages)
-
-        // Max Results
-        val maxResults = arrayOf("1 resultado", "3 resultados", "5 resultados", "10 resultados")
-        spinnerMaxResults.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, maxResults)
     }
 
     private fun loadSettings() {
         val prefs = getSharedPreferences("AudioSettings", MODE_PRIVATE)
 
-        // Cargar configuración guardada o valores por defecto
-        spinnerSampleRate.setSelection(prefs.getInt("sampleRate", 1)) // 16000 Hz
-        spinnerAudioSource.setSelection(prefs.getInt("audioSource", 2)) // VOICE_RECOGNITION
-        spinnerChannelConfig.setSelection(prefs.getInt("channelConfig", 0)) // MONO
-        spinnerAudioEncoding.setSelection(prefs.getInt("audioEncoding", 1)) // PCM_16BIT
-        spinnerBufferSize.setSelection(prefs.getInt("bufferSize", 1)) // x2
+        selectedProfile = prefs.getString("selectedProfile", "moderate") ?: "moderate"
 
-        switchAGC.isChecked = prefs.getBoolean("agc", true)
-        switchNoiseSuppressor.isChecked = prefs.getBoolean("noiseSuppressor", true)
-        switchEchoCanceler.isChecked = prefs.getBoolean("echoCanceler", false)
-
-        spinnerLanguage.setSelection(prefs.getInt("language", 0)) // es-ES
-        switchPartialResults.isChecked = prefs.getBoolean("partialResults", true)
-        switchContinuousRecognition.isChecked = prefs.getBoolean("continuousRecognition", false)
-        spinnerMaxResults.setSelection(prefs.getInt("maxResults", 0)) // 1
-
-        switchAutoModeSwitch.isChecked = prefs.getBoolean("autoModeSwitch", true)
-        switchPreferOnline.isChecked = prefs.getBoolean("preferOnline", true)
+        val languageIndex = prefs.getInt("language", 0)
+        spinnerLanguage.setSelection(languageIndex)
 
         switchVibration.isChecked = prefs.getBoolean("vibration", true)
         switchSoundFeedback.isChecked = prefs.getBoolean("soundFeedback", false)
+
+        updateProfileSelection(selectedProfile)
     }
 
     private fun setupListeners() {
-        btnBack.setOnClickListener {
-            finish()
+        btnBack.setOnClickListener { finish() }
+
+        cardSilent.setOnClickListener { selectProfile("silent") }
+        cardModerate.setOnClickListener { selectProfile("moderate") }
+        cardNoisy.setOnClickListener { selectProfile("noisy") }
+        cardOutdoor.setOnClickListener { selectProfile("outdoor") }
+
+        btnBottomHome?.setOnClickListener { saveAndFinish() }
+        btnBottomHistory?.setOnClickListener {
+            saveAndFinish()
+            startActivity(Intent(this, HistoryActivity::class.java))
         }
 
-        btnSave.setOnClickListener {
-            saveSettings()
-        }
-
-        btnRestoreDefaults.setOnClickListener {
-            restoreDefaults()
-        }
-
-        // Mostrar info según la selección
-        spinnerSampleRate.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+        spinnerLanguage.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
-                updateInfoText()
+                saveSettings()
             }
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
+
+        switchVibration.setOnCheckedChangeListener { _, _ -> saveSettings() }
+        switchSoundFeedback.setOnCheckedChangeListener { _, _ -> saveSettings() }
+    }
+
+    private fun selectProfile(profile: String) {
+        selectedProfile = profile
+        updateProfileSelection(profile)
+        saveSettings()
+
+        val profileName = when(profile) {
+            "silent" -> "Entorno Silencioso"
+            "moderate" -> "Entorno Moderado"
+            "noisy" -> "Entorno Ruidoso"
+            "outdoor" -> "Exterior/Viento"
+            else -> "Desconocido"
+        }
+
+        Toast.makeText(this, "✓ Perfil aplicado: $profileName", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun updateProfileSelection(profile: String) {
+        checkSilent.visibility = View.GONE
+        checkModerate.visibility = View.GONE
+        checkNoisy.visibility = View.GONE
+        checkOutdoor.visibility = View.GONE
+
+        when(profile) {
+            "silent" -> {
+                checkSilent.visibility = View.VISIBLE
+                tvSelectedProfile.text = "✓ Perfil seleccionado: Entorno Silencioso"
+            }
+            "moderate" -> {
+                checkModerate.visibility = View.VISIBLE
+                tvSelectedProfile.text = "✓ Perfil seleccionado: Entorno Moderado"
+            }
+            "noisy" -> {
+                checkNoisy.visibility = View.VISIBLE
+                tvSelectedProfile.text = "✓ Perfil seleccionado: Entorno Ruidoso"
+            }
+            "outdoor" -> {
+                checkOutdoor.visibility = View.VISIBLE
+                tvSelectedProfile.text = "✓ Perfil seleccionado: Exterior/Viento"
+            }
         }
     }
 
@@ -201,69 +205,41 @@ class SettingsActivity : AppCompatActivity() {
         val prefs = getSharedPreferences("AudioSettings", MODE_PRIVATE)
         val editor = prefs.edit()
 
-        // Guardar todas las configuraciones
-        editor.putInt("sampleRate", spinnerSampleRate.selectedItemPosition)
-        editor.putInt("audioSource", spinnerAudioSource.selectedItemPosition)
-        editor.putInt("channelConfig", spinnerChannelConfig.selectedItemPosition)
-        editor.putInt("audioEncoding", spinnerAudioEncoding.selectedItemPosition)
-        editor.putInt("bufferSize", spinnerBufferSize.selectedItemPosition)
+        editor.putString("selectedProfile", selectedProfile)
 
-        editor.putBoolean("agc", switchAGC.isChecked)
-        editor.putBoolean("noiseSuppressor", switchNoiseSuppressor.isChecked)
-        editor.putBoolean("echoCanceler", switchEchoCanceler.isChecked)
+        val profile = profiles[selectedProfile] ?: profiles["moderate"]!!
+
+        editor.putInt("sampleRate", profile.sampleRate)
+        editor.putInt("audioSource", profile.audioSource)
+        editor.putInt("channelConfig", profile.channelConfig)
+        editor.putInt("audioEncoding", profile.audioEncoding)
+        editor.putInt("bufferSize", profile.bufferSize)
+        editor.putBoolean("agc", profile.agc)
+        editor.putBoolean("noiseSuppressor", profile.noiseSuppressor)
+        editor.putBoolean("echoCanceler", profile.echoCanceler)
+        editor.putBoolean("partialResults", profile.partialResults)
+        editor.putBoolean("continuousRecognition", profile.continuousRecognition)
+        editor.putInt("maxResults", profile.maxResults)
+        editor.putBoolean("autoModeSwitch", profile.autoModeSwitch)
+        editor.putBoolean("preferOnline", profile.preferOnline)
 
         editor.putInt("language", spinnerLanguage.selectedItemPosition)
-        editor.putBoolean("partialResults", switchPartialResults.isChecked)
-        editor.putBoolean("continuousRecognition", switchContinuousRecognition.isChecked)
-        editor.putInt("maxResults", spinnerMaxResults.selectedItemPosition)
-
-        editor.putBoolean("autoModeSwitch", switchAutoModeSwitch.isChecked)
-        editor.putBoolean("preferOnline", switchPreferOnline.isChecked)
-
         editor.putBoolean("vibration", switchVibration.isChecked)
         editor.putBoolean("soundFeedback", switchSoundFeedback.isChecked)
 
         editor.apply()
+    }
 
-        Toast.makeText(this, "✓ Configuración guardada", Toast.LENGTH_SHORT).show()
+    private fun saveAndFinish() {
+        saveSettings()
         finish()
     }
 
-    private fun restoreDefaults() {
-        spinnerSampleRate.setSelection(1) // 16000 Hz
-        spinnerAudioSource.setSelection(2) // VOICE_RECOGNITION
-        spinnerChannelConfig.setSelection(0) // MONO
-        spinnerAudioEncoding.setSelection(1) // PCM_16BIT
-        spinnerBufferSize.setSelection(1) // x2
-
-        switchAGC.isChecked = true
-        switchNoiseSuppressor.isChecked = true
-        switchEchoCanceler.isChecked = false
-
-        spinnerLanguage.setSelection(0) // es-ES
-        switchPartialResults.isChecked = true
-        switchContinuousRecognition.isChecked = false
-        spinnerMaxResults.setSelection(0) // 1
-
-        switchAutoModeSwitch.isChecked = true
-        switchPreferOnline.isChecked = true
-
-        switchVibration.isChecked = true
-        switchSoundFeedback.isChecked = false
-
-        Toast.makeText(this, "↺ Valores por defecto restaurados", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun updateInfoText() {
-        val sampleRate = spinnerSampleRate.selectedItemPosition
-        val info = when (sampleRate) {
-            0 -> "Calidad básica, menor consumo de batería"
-            1 -> "Óptimo para reconocimiento de voz"
-            2 -> "Balance entre calidad y rendimiento"
-            3 -> "Alta calidad, mayor consumo"
-            4 -> "Máxima calidad, alto consumo de batería"
-            else -> ""
-        }
-        tvInfo.text = "ℹ️ $info"
+    private fun setupBackPressHandler() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                saveAndFinish()
+            }
+        })
     }
 }
