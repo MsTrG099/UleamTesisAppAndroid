@@ -15,6 +15,7 @@ import android.os.Vibrator
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.widget.Button
 import android.widget.ImageButton
@@ -29,6 +30,7 @@ import org.vosk.Recognizer
 import org.vosk.android.SpeechService
 import org.vosk.android.StorageService
 import java.io.IOException
+import java.util.*
 
 class TranscriptionActivity : AppCompatActivity() {
 
@@ -48,6 +50,10 @@ class TranscriptionActivity : AppCompatActivity() {
     // Google SpeechRecognizer (Online)
     private var googleSpeechRecognizer: SpeechRecognizer? = null
 
+    // Text-to-Speech (TTS) - NUEVO
+    private var textToSpeech: TextToSpeech? = null
+    private var isTTSInitialized = false
+
     private var isListening = false
     private var isOnlineMode = false
     private var isManualMode = false
@@ -63,7 +69,7 @@ class TranscriptionActivity : AppCompatActivity() {
     // Para vibración
     private lateinit var vibrator: Vibrator
 
-    // NUEVO: Para el historial
+    // Para el historial
     private lateinit var database: TranscriptionDatabase
     private var recordingStartTime: Long = 0
 
@@ -80,8 +86,11 @@ class TranscriptionActivity : AppCompatActivity() {
         audioSettings = AudioSettingsHelper(this)
         vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
 
-        // NUEVO: Inicializar base de datos
+        // Inicializar base de datos
         database = TranscriptionDatabase(this)
+
+        // NUEVO: Inicializar Text-to-Speech
+        initTextToSpeech()
 
         // Inicializar vistas
         initViews()
@@ -106,10 +115,86 @@ class TranscriptionActivity : AppCompatActivity() {
         super.onResume()
         // Recargar configuración por si cambió en Settings
         audioSettings.logCurrentSettings(TAG)
+        configureTTS() // Reconfigurar TTS con nuevos ajustes
+
         // Re-evaluar el modo si no está en manual
         if (!isManualMode && !isListening) {
             checkConnectionAndSetMode()
         }
+    }
+
+    // NUEVO: Inicializar Text-to-Speech
+    private fun initTextToSpeech() {
+        textToSpeech = TextToSpeech(this) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                val languageCode = audioSettings.getLanguageCode()
+                val locale = when {
+                    languageCode.startsWith("es") -> Locale("es", "ES")
+                    languageCode.startsWith("en") -> Locale.ENGLISH
+                    else -> Locale("es", "ES")
+                }
+
+                val result = textToSpeech?.setLanguage(locale)
+                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    Log.e(TAG, "TTS: Idioma no soportado")
+                    Toast.makeText(this, "⚠️ Idioma TTS no disponible", Toast.LENGTH_SHORT).show()
+                    isTTSInitialized = false
+                } else {
+                    isTTSInitialized = true
+                    configureTTS()
+                    Log.d(TAG, "✓ TTS inicializado correctamente")
+                }
+            } else {
+                Log.e(TAG, "✗ Error al inicializar TTS")
+                isTTSInitialized = false
+            }
+        }
+    }
+
+    // NUEVO: Configurar parámetros de TTS
+    private fun configureTTS() {
+        if (!isTTSInitialized || textToSpeech == null) return
+
+        // Configurar velocidad
+        val speed = audioSettings.getTTSSpeed()
+        textToSpeech?.setSpeechRate(speed)
+
+        // Configurar tono
+        val pitch = audioSettings.getTTSPitch()
+        textToSpeech?.setPitch(pitch)
+
+        Log.d(TAG, "TTS configurado: velocidad=$speed, tono=$pitch")
+    }
+
+    // NUEVO: Leer texto con TTS
+    private fun speakText(text: String) {
+        if (!audioSettings.isTTSEnabled()) {
+            Log.d(TAG, "TTS deshabilitado en configuración")
+            return
+        }
+
+        if (!isTTSInitialized || textToSpeech == null) {
+            Log.w(TAG, "TTS no inicializado, no se puede leer el texto")
+            return
+        }
+
+        if (text.isBlank() || text == "El texto aparecerá aquí...") {
+            Log.d(TAG, "Texto vacío o placeholder, no se lee")
+            return
+        }
+
+        // Detener cualquier lectura en progreso
+        textToSpeech?.stop()
+
+        // Leer el texto
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "TranscriptionTTS")
+        } else {
+            @Suppress("DEPRECATION")
+            textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null)
+        }
+
+        Log.d(TAG, "🔊 Leyendo transcripción: ${text.take(50)}...")
     }
 
     private fun initViews() {
@@ -138,6 +223,7 @@ class TranscriptionActivity : AppCompatActivity() {
 
         btnClear.setOnClickListener {
             tvResult.text = ""
+            textToSpeech?.stop() // Detener lectura si está en progreso
         }
 
         btnToggleMode.setOnClickListener {
@@ -268,9 +354,12 @@ class TranscriptionActivity : AppCompatActivity() {
 
         releaseAudioEffects()
 
-        // NUEVO: Guardar tiempo de inicio para calcular duración
+        // Guardar tiempo de inicio para calcular duración
         recordingStartTime = System.currentTimeMillis()
         Log.d(TAG, "Inicio de grabación: $recordingStartTime")
+
+        // NUEVO: Detener TTS si está hablando
+        textToSpeech?.stop()
 
         if (isOnlineMode) {
             startGoogleSpeechRecognition()
@@ -369,11 +458,10 @@ class TranscriptionActivity : AppCompatActivity() {
         vibrateIfEnabled()
         playSoundIfEnabled()
 
-        // NUEVO: Guardar en historial automáticamente
+        // Guardar en historial automáticamente
         saveTranscriptionToHistory()
     }
 
-    // NUEVO: Función para guardar en el historial
     private fun saveTranscriptionToHistory() {
         val text = tvResult.text.toString().trim()
 
@@ -418,7 +506,6 @@ class TranscriptionActivity : AppCompatActivity() {
         }
     }
 
-    // NUEVO: Función auxiliar para contar palabras
     private fun countWords(text: String): Int {
         if (text.isBlank()) return 0
         return text.trim().split("\\s+".toRegex()).size
@@ -534,6 +621,10 @@ class TranscriptionActivity : AppCompatActivity() {
             onResult(hypothesis)
             runOnUiThread {
                 tvStatus.text = "Listo ✓ (Offline)"
+
+                // NUEVO: Leer el texto completo con TTS
+                val finalText = tvResult.text.toString()
+                speakText(finalText)
             }
         }
 
@@ -628,7 +719,7 @@ class TranscriptionActivity : AppCompatActivity() {
                 ).show()
             }
 
-            // 🔁 Reintentar automáticamente mientras no se haya detenido
+            // Reintentar automáticamente mientras no se haya detenido
             if (isListening) {
                 Log.d(TAG, "Reintentando escucha tras error...")
                 googleSpeechRecognizer?.cancel()
@@ -661,10 +752,13 @@ class TranscriptionActivity : AppCompatActivity() {
                         "$currentText $text"
                     }
                     tvStatus.text = "Listo ✓ (Online)"
+
+                    // NUEVO: Leer el nuevo texto con TTS
+                    speakText(text)
                 }
             }
 
-            // 🔁 Reiniciar automáticamente la escucha si no se ha detenido manualmente
+            // Reiniciar automáticamente la escucha si no se ha detenido manualmente
             if (isListening) {
                 Log.d(TAG, "Reiniciando escucha continua...")
                 googleSpeechRecognizer?.cancel()
@@ -716,9 +810,17 @@ class TranscriptionActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "Destruyendo actividad...")
+
+        // Liberar recursos de reconocimiento de voz
         voskSpeechService?.stop()
         voskSpeechService?.shutdown()
         googleSpeechRecognizer?.destroy()
         releaseAudioEffects()
+
+        // NUEVO: Liberar recursos de TTS
+        textToSpeech?.stop()
+        textToSpeech?.shutdown()
+        textToSpeech = null
+        Log.d(TAG, "✓ TTS liberado")
     }
 }

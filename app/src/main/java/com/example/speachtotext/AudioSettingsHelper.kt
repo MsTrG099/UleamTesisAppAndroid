@@ -32,6 +32,15 @@ class AudioSettingsHelper(private val context: Context) {
         return prefs.getString(key, defaultValue) ?: defaultValue
     }
 
+    private fun getSafeFloat(key: String, defaultValue: Float): Float {
+        val value = prefs.all[key]
+        return when (value) {
+            is Float -> value
+            is String -> value.toFloatOrNull() ?: defaultValue
+            else -> defaultValue
+        }
+    }
+
     // === Preferencias de audio ===
     fun getSampleRate(): Int {
         return when (getSafeInt("sampleRate", 1)) {
@@ -86,6 +95,31 @@ class AudioSettingsHelper(private val context: Context) {
         return getSafeBoolean("enableEchoCanceler", false)
     }
 
+    // === Text-to-Speech (TTS) - NUEVO ===
+    fun isTTSEnabled(): Boolean {
+        return getSafeBoolean("enableTTS", true)
+    }
+
+    fun getTTSSpeed(): Float {
+        // 0 = Lento (0.7), 1 = Normal (1.0), 2 = Rápido (1.3)
+        return when (getSafeInt("ttsSpeed", 1)) {
+            0 -> 0.7f
+            1 -> 1.0f
+            2 -> 1.3f
+            else -> 1.0f
+        }
+    }
+
+    fun getTTSPitch(): Float {
+        // 0 = Grave (0.8), 1 = Normal (1.0), 2 = Agudo (1.2)
+        return when (getSafeInt("ttsPitch", 1)) {
+            0 -> 0.8f
+            1 -> 1.0f
+            2 -> 1.2f
+            else -> 1.0f
+        }
+    }
+
     // === Depuración ===
     fun logCurrentSettings(tag: String = TAG) {
         Log.d(tag, buildString {
@@ -101,6 +135,9 @@ class AudioSettingsHelper(private val context: Context) {
             appendLine("• EchoCanceler: ${isEchoCancelerEnabled()}")
             appendLine("• AutoSwitch: ${isAutoModeSwitchEnabled()}")
             appendLine("• PreferOnline: ${shouldPreferOnline()}")
+            appendLine("• TTS Habilitado: ${isTTSEnabled()}")
+            appendLine("• TTS Velocidad: ${getTTSSpeed()}")
+            appendLine("• TTS Tono: ${getTTSPitch()}")
         })
     }
 }

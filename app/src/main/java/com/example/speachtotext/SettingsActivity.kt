@@ -25,6 +25,11 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var switchSoundFeedback: Switch
     private lateinit var tvSelectedProfile: TextView
 
+    // NUEVO: Views para TTS
+    private lateinit var switchTTS: Switch
+    private lateinit var spinnerTTSSpeed: Spinner
+    private lateinit var spinnerTTSPitch: Spinner
+
     // Navegación inferior
     private var btnBottomHome: View? = null
     private var btnBottomHistory: View? = null
@@ -86,6 +91,7 @@ class SettingsActivity : AppCompatActivity() {
 
         initViews()
         setupLanguageSpinner()
+        setupTTSSpinners() // NUEVO
         loadSettings()
         setupListeners()
         setupBackPressHandler()
@@ -106,6 +112,11 @@ class SettingsActivity : AppCompatActivity() {
         switchSoundFeedback = findViewById(R.id.switchSoundFeedback)
         tvSelectedProfile = findViewById(R.id.tvSelectedProfile)
 
+        // NUEVO: Views de TTS
+        switchTTS = findViewById(R.id.switchTTS)
+        spinnerTTSSpeed = findViewById(R.id.spinnerTTSSpeed)
+        spinnerTTSPitch = findViewById(R.id.spinnerTTSPitch)
+
         btnBottomHome = findViewById(R.id.btnBottomHome)
         btnBottomHistory = findViewById(R.id.btnBottomHistory)
     }
@@ -120,6 +131,15 @@ class SettingsActivity : AppCompatActivity() {
         spinnerLanguage.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, languages)
     }
 
+    // NUEVO: Configurar spinners de TTS
+    private fun setupTTSSpinners() {
+        val speeds = arrayOf("🐢 Lento", "🚶 Normal", "🏃 Rápido")
+        spinnerTTSSpeed.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, speeds)
+
+        val pitches = arrayOf("🔉 Grave", "🔊 Normal", "🔔 Agudo")
+        spinnerTTSPitch.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, pitches)
+    }
+
     private fun loadSettings() {
         val prefs = getSharedPreferences("AudioSettings", MODE_PRIVATE)
 
@@ -130,6 +150,11 @@ class SettingsActivity : AppCompatActivity() {
 
         switchVibration.isChecked = prefs.getBoolean("vibration", true)
         switchSoundFeedback.isChecked = prefs.getBoolean("soundFeedback", false)
+
+        // NUEVO: Cargar configuración de TTS
+        switchTTS.isChecked = prefs.getBoolean("enableTTS", true)
+        spinnerTTSSpeed.setSelection(prefs.getInt("ttsSpeed", 1))
+        spinnerTTSPitch.setSelection(prefs.getInt("ttsPitch", 1))
 
         updateProfileSelection(selectedProfile)
     }
@@ -157,6 +182,27 @@ class SettingsActivity : AppCompatActivity() {
 
         switchVibration.setOnCheckedChangeListener { _, _ -> saveSettings() }
         switchSoundFeedback.setOnCheckedChangeListener { _, _ -> saveSettings() }
+
+        // NUEVO: Listeners de TTS
+        switchTTS.setOnCheckedChangeListener { _, isChecked ->
+            spinnerTTSSpeed.isEnabled = isChecked
+            spinnerTTSPitch.isEnabled = isChecked
+            saveSettings()
+        }
+
+        spinnerTTSSpeed.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                saveSettings()
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
+
+        spinnerTTSPitch.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                saveSettings()
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
     }
 
     private fun selectProfile(profile: String) {
@@ -226,6 +272,11 @@ class SettingsActivity : AppCompatActivity() {
         editor.putInt("language", spinnerLanguage.selectedItemPosition)
         editor.putBoolean("vibration", switchVibration.isChecked)
         editor.putBoolean("soundFeedback", switchSoundFeedback.isChecked)
+
+        // NUEVO: Guardar configuración de TTS
+        editor.putBoolean("enableTTS", switchTTS.isChecked)
+        editor.putInt("ttsSpeed", spinnerTTSSpeed.selectedItemPosition)
+        editor.putInt("ttsPitch", spinnerTTSPitch.selectedItemPosition)
 
         editor.apply()
     }
