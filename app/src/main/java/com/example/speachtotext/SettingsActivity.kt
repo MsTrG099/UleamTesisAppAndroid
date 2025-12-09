@@ -25,10 +25,13 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var switchSoundFeedback: Switch
     private lateinit var tvSelectedProfile: TextView
 
-    // NUEVO: Views para TTS
+    // Views para TTS
     private lateinit var switchTTS: Switch
     private lateinit var spinnerTTSSpeed: Spinner
     private lateinit var spinnerTTSPitch: Spinner
+
+    // Views para tema
+    private lateinit var spinnerTheme: Spinner
 
     // Navegación inferior
     private var btnBottomHome: View? = null
@@ -86,12 +89,14 @@ class SettingsActivity : AppCompatActivity() {
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        ThemeHelper.applyTheme(this)  // ✅ Aplicar tema ANTES de setContentView
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
 
         initViews()
         setupLanguageSpinner()
-        setupTTSSpinners() // NUEVO
+        setupTTSSpinners()
+        setupThemeSpinner()
         loadSettings()
         setupListeners()
         setupBackPressHandler()
@@ -112,10 +117,13 @@ class SettingsActivity : AppCompatActivity() {
         switchSoundFeedback = findViewById(R.id.switchSoundFeedback)
         tvSelectedProfile = findViewById(R.id.tvSelectedProfile)
 
-        // NUEVO: Views de TTS
+        // Views de TTS
         switchTTS = findViewById(R.id.switchTTS)
         spinnerTTSSpeed = findViewById(R.id.spinnerTTSSpeed)
         spinnerTTSPitch = findViewById(R.id.spinnerTTSPitch)
+
+        // View de tema
+        spinnerTheme = findViewById(R.id.spinnerTheme)
 
         btnBottomHome = findViewById(R.id.btnBottomHome)
         btnBottomHistory = findViewById(R.id.btnBottomHistory)
@@ -131,13 +139,21 @@ class SettingsActivity : AppCompatActivity() {
         spinnerLanguage.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, languages)
     }
 
-    // NUEVO: Configurar spinners de TTS
     private fun setupTTSSpinners() {
         val speeds = arrayOf("🐢 Lento", "🚶 Normal", "🏃 Rápido")
         spinnerTTSSpeed.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, speeds)
 
         val pitches = arrayOf("🔉 Grave", "🔊 Normal", "🔔 Agudo")
         spinnerTTSPitch.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, pitches)
+    }
+
+    private fun setupThemeSpinner() {
+        val themes = arrayOf(
+            "💡 Modo Claro",
+            "🌙 Modo Oscuro",
+            "🔄 Seguir sistema"
+        )
+        spinnerTheme.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, themes)
     }
 
     private fun loadSettings() {
@@ -151,10 +167,13 @@ class SettingsActivity : AppCompatActivity() {
         switchVibration.isChecked = prefs.getBoolean("vibration", true)
         switchSoundFeedback.isChecked = prefs.getBoolean("soundFeedback", false)
 
-        // NUEVO: Cargar configuración de TTS
+        // Cargar configuración de TTS
         switchTTS.isChecked = prefs.getBoolean("enableTTS", true)
         spinnerTTSSpeed.setSelection(prefs.getInt("ttsSpeed", 1))
         spinnerTTSPitch.setSelection(prefs.getInt("ttsPitch", 1))
+
+        // ✅ ACTUALIZADO: Usar ThemeHelper para cargar el tema
+        spinnerTheme.setSelection(ThemeHelper.getCurrentThemeIndex(this))
 
         updateProfileSelection(selectedProfile)
     }
@@ -183,7 +202,7 @@ class SettingsActivity : AppCompatActivity() {
         switchVibration.setOnCheckedChangeListener { _, _ -> saveSettings() }
         switchSoundFeedback.setOnCheckedChangeListener { _, _ -> saveSettings() }
 
-        // NUEVO: Listeners de TTS
+        // Listeners de TTS
         switchTTS.setOnCheckedChangeListener { _, isChecked ->
             spinnerTTSSpeed.isEnabled = isChecked
             spinnerTTSPitch.isEnabled = isChecked
@@ -203,6 +222,29 @@ class SettingsActivity : AppCompatActivity() {
             }
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
         }
+
+        // ✅ ACTUALIZADO: Listener de tema simplificado
+        spinnerTheme.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                applyTheme(position)
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
+    }
+
+    // ✅ ACTUALIZADO: Usar ThemeHelper para aplicar el tema
+    private fun applyTheme(themeIndex: Int) {
+        // Usar ThemeHelper para guardar y aplicar
+        ThemeHelper.saveAndApplyTheme(this, themeIndex)
+
+        val themeName = when(themeIndex) {
+            0 -> "Modo Claro"
+            1 -> "Modo Oscuro"
+            2 -> "Seguir sistema"
+            else -> "Desconocido"
+        }
+
+        Toast.makeText(this, "✓ Tema aplicado: $themeName", Toast.LENGTH_SHORT).show()
     }
 
     private fun selectProfile(profile: String) {
@@ -273,7 +315,7 @@ class SettingsActivity : AppCompatActivity() {
         editor.putBoolean("vibration", switchVibration.isChecked)
         editor.putBoolean("soundFeedback", switchSoundFeedback.isChecked)
 
-        // NUEVO: Guardar configuración de TTS
+        // Guardar configuración de TTS
         editor.putBoolean("enableTTS", switchTTS.isChecked)
         editor.putInt("ttsSpeed", spinnerTTSSpeed.selectedItemPosition)
         editor.putInt("ttsPitch", spinnerTTSPitch.selectedItemPosition)

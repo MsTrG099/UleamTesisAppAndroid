@@ -30,6 +30,7 @@ class HistoryActivity : AppCompatActivity() {
     private var allRecords = listOf<TranscriptionRecord>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        ThemeHelper.applyTheme(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_history)
 
@@ -111,7 +112,7 @@ class HistoryActivity : AppCompatActivity() {
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clip = ClipData.newPlainText("Transcripción", text)
         clipboard.setPrimaryClip(clip)
-        Toast.makeText(this, "✓ Copiado al portapapeles", Toast.LENGTH_SHORT).show()
+        NotificationHelper.show(this, "✓ Copiado al portapapeles")
     }
 
     private fun deleteRecord(record: TranscriptionRecord) {
@@ -120,7 +121,7 @@ class HistoryActivity : AppCompatActivity() {
             .setMessage("¿Estás seguro de que deseas eliminar esta transcripción?")
             .setPositiveButton("Eliminar") { _, _ ->
                 database.deleteTranscription(record.id)
-                Toast.makeText(this, "✓ Transcripción eliminada", Toast.LENGTH_SHORT).show()
+                NotificationHelper.show(this, "✓ Transcripción eliminada")
                 loadHistory()
             }
             .setNegativeButton("Cancelar", null)

@@ -79,6 +79,7 @@ class TranscriptionActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        ThemeHelper.applyTheme(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_transcription)
 
@@ -137,7 +138,7 @@ class TranscriptionActivity : AppCompatActivity() {
                 val result = textToSpeech?.setLanguage(locale)
                 if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                     Log.e(TAG, "TTS: Idioma no soportado")
-                    Toast.makeText(this, "⚠️ Idioma TTS no disponible", Toast.LENGTH_SHORT).show()
+                    NotificationHelper.show(this, "⚠️ Idioma TTS no disponible")
                     isTTSInitialized = false
                 } else {
                     isTTSInitialized = true
@@ -400,7 +401,7 @@ class TranscriptionActivity : AppCompatActivity() {
 
     private fun startGoogleSpeechRecognition() {
         if (!isInternetAvailable() && !isManualMode) {
-            Toast.makeText(this, "Sin conexión. Cambiando a modo Offline...", Toast.LENGTH_SHORT).show()
+            NotificationHelper.show(this, "Sin conexión. Cambiando a modo Offline...")
             isOnlineMode = false
             updateModeUI()
             startVoskRecognition()
@@ -494,11 +495,10 @@ class TranscriptionActivity : AppCompatActivity() {
             Log.d(TAG, "✓ Transcripción guardada en historial [ID: $id, Modo: $mode, Duración: ${durationSeconds}s, Palabras: ${countWords(text)}]")
 
             // Mostrar confirmación sutil
-            Toast.makeText(
+            NotificationHelper.show(
                 this,
-                "✓ Guardado en historial (${countWords(text)} palabras)",
-                Toast.LENGTH_SHORT
-            ).show()
+                "✓ Guardado en historial (${countWords(text)} palabras)"
+            )
 
         } catch (e: Exception) {
             Log.e(TAG, "✗ Error al guardar en historial", e)

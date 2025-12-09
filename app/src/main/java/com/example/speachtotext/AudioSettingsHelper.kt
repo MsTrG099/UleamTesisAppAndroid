@@ -2,11 +2,11 @@ package com.example.speachtotext
 
 import android.content.Context
 import android.util.Log
-import androidx.preference.PreferenceManager
 
 class AudioSettingsHelper(private val context: Context) {
 
-    private val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+    // CAMBIO: Usar el mismo SharedPreferences que SettingsActivity
+    private val prefs = context.getSharedPreferences("AudioSettings", Context.MODE_PRIVATE)
     private val TAG = "AudioSettingsHelper"
 
     // === Métodos seguros para leer Int o String indistintamente ===
@@ -54,7 +54,14 @@ class AudioSettingsHelper(private val context: Context) {
     }
 
     fun getLanguageCode(): String {
-        return getSafeString("language", "es-ES")
+        // Mapear el índice del spinner a códigos de idioma
+        return when (getSafeInt("language", 0)) {
+            0 -> "es-ES"  // Español (España)
+            1 -> "es-MX"  // Español (México)
+            2 -> "es-AR"  // Español (Argentina)
+            3 -> "es-CO"  // Español (Colombia)
+            else -> "es-ES"
+        }
     }
 
     fun isPartialResultsEnabled(): Boolean {
@@ -66,16 +73,16 @@ class AudioSettingsHelper(private val context: Context) {
     }
 
     fun isVibrationEnabled(): Boolean {
-        return getSafeBoolean("enableVibration", true)
+        return getSafeBoolean("vibration", true)
     }
 
     fun isSoundFeedbackEnabled(): Boolean {
-        return getSafeBoolean("enableSound", true)
+        return getSafeBoolean("soundFeedback", false)
     }
 
     // === Modo automático y preferencias de red ===
     fun isAutoModeSwitchEnabled(): Boolean {
-        return getSafeBoolean("autoSwitchMode", true)
+        return getSafeBoolean("autoModeSwitch", true)
     }
 
     fun shouldPreferOnline(): Boolean {
@@ -84,18 +91,18 @@ class AudioSettingsHelper(private val context: Context) {
 
     // === Efectos de audio ===
     fun isAGCEnabled(): Boolean {
-        return getSafeBoolean("enableAGC", false)
+        return getSafeBoolean("agc", false)
     }
 
     fun isNoiseSuppressorEnabled(): Boolean {
-        return getSafeBoolean("enableNoiseSuppressor", false)
+        return getSafeBoolean("noiseSuppressor", false)
     }
 
     fun isEchoCancelerEnabled(): Boolean {
-        return getSafeBoolean("enableEchoCanceler", false)
+        return getSafeBoolean("echoCanceler", false)
     }
 
-    // === Text-to-Speech (TTS) - NUEVO ===
+    // === Text-to-Speech (TTS) ===
     fun isTTSEnabled(): Boolean {
         return getSafeBoolean("enableTTS", true)
     }
