@@ -419,6 +419,24 @@
                         android:minHeight="48dp"
                         android:background="@drawable/spinner_background"/>
 
+                    <!-- Tamaño de texto -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="📏 Tamaño del Texto de Transcripción"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"
+                        android:layout_marginBottom="8dp"/>
+
+                    <Spinner
+                        android:id="@+id/spinnerTextSize"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:minHeight="48dp"
+                        android:background="@drawable/spinner_background"/>
+
                     <!-- Vibración -->
                     <LinearLayout
                         android:layout_width="match_parent"

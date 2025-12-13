@@ -98,6 +98,9 @@ class TranscriptionActivity : AppCompatActivity() {
         // Inicializar vistas
         initViews()
 
+        // NUEVO: Aplicar tamaño de texto inicial
+        applyTextSize()
+
         // Configurar listeners
         setupListeners()
 
@@ -119,6 +122,7 @@ class TranscriptionActivity : AppCompatActivity() {
         // Recargar configuración por si cambió en Settings
         audioSettings.logCurrentSettings(TAG)
         configureTTS() // Reconfigurar TTS con nuevos ajustes
+        applyTextSize() // NUEVO: Aplicar tamaño de texto
 
         // Re-evaluar el modo si no está en manual
         if (!isManualMode && !isListening) {
@@ -199,6 +203,13 @@ class TranscriptionActivity : AppCompatActivity() {
         textToSpeech?.setPitch(pitch)
 
         Log.d(TAG, "TTS configurado: velocidad=$speed, tono=$pitch")
+    }
+
+    // NUEVO: Aplicar tamaño de texto a la transcripción
+    private fun applyTextSize() {
+        val textSize = audioSettings.getTranscriptionTextSize()
+        tvResult.textSize = textSize
+        Log.d(TAG, "Tamaño de texto aplicado: ${textSize}sp")
     }
 
     // ACTUALIZADO: Leer texto con TTS y detener micrófono

@@ -33,6 +33,9 @@ class SettingsActivity : AppCompatActivity() {
     // Views para tema
     private lateinit var spinnerTheme: Spinner
 
+    // NUEVO: View para tamaño de texto
+    private lateinit var spinnerTextSize: Spinner
+
     // Navegación inferior
     private var btnBottomHome: View? = null
     private var btnBottomHistory: View? = null
@@ -95,6 +98,7 @@ class SettingsActivity : AppCompatActivity() {
 
         initViews()
         setupLanguageSpinner()
+        setupTextSizeSpinner() // NUEVO
         setupTTSSpinners()
         setupThemeSpinner()
         loadSettings()
@@ -125,6 +129,9 @@ class SettingsActivity : AppCompatActivity() {
         // View de tema
         spinnerTheme = findViewById(R.id.spinnerTheme)
 
+        // NUEVO: View de tamaño de texto
+        spinnerTextSize = findViewById(R.id.spinnerTextSize)
+
         btnBottomHome = findViewById(R.id.btnBottomHome)
         btnBottomHistory = findViewById(R.id.btnBottomHistory)
     }
@@ -139,6 +146,18 @@ class SettingsActivity : AppCompatActivity() {
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, languages)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerLanguage.adapter = adapter
+    }
+
+    // NUEVO: Configurar spinner de tamaño de texto
+    private fun setupTextSizeSpinner() {
+        val textSizes = arrayOf(
+            "📏 Pequeño",
+            "📏 Normal",
+            "📏 Grande"
+        )
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, textSizes)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerTextSize.adapter = adapter
     }
 
     private fun setupTTSSpinners() {
@@ -172,6 +191,10 @@ class SettingsActivity : AppCompatActivity() {
         val languageIndex = prefs.getInt("language", 0)
         spinnerLanguage.setSelection(languageIndex)
 
+        // NUEVO: Cargar tamaño de texto
+        val textSizeIndex = prefs.getInt("textSize", 1) // Default: Normal (índice 1)
+        spinnerTextSize.setSelection(textSizeIndex)
+
         switchVibration.isChecked = prefs.getBoolean("vibration", true)
         switchSoundFeedback.isChecked = prefs.getBoolean("soundFeedback", false)
 
@@ -201,6 +224,14 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         spinnerLanguage.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                saveSettings()
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
+
+        // NUEVO: Listener para tamaño de texto
+        spinnerTextSize.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
                 saveSettings()
             }
@@ -322,6 +353,9 @@ class SettingsActivity : AppCompatActivity() {
         editor.putInt("language", spinnerLanguage.selectedItemPosition)
         editor.putBoolean("vibration", switchVibration.isChecked)
         editor.putBoolean("soundFeedback", switchSoundFeedback.isChecked)
+
+        // NUEVO: Guardar tamaño de texto
+        editor.putInt("textSize", spinnerTextSize.selectedItemPosition)
 
         // Guardar configuración de TTS
         editor.putBoolean("enableTTS", switchTTS.isChecked)

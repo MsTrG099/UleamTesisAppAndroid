@@ -127,6 +127,17 @@ class AudioSettingsHelper(private val context: Context) {
         }
     }
 
+    // === Tamaño de texto de transcripción ===
+    fun getTranscriptionTextSize(): Float {
+        // 0 = Pequeño (16sp), 1 = Normal (18sp), 2 = Grande (22sp)
+        return when (getSafeInt("textSize", 1)) {
+            0 -> 16f
+            1 -> 18f
+            2 -> 22f
+            else -> 18f
+        }
+    }
+
     // === Depuración ===
     fun logCurrentSettings(tag: String = TAG) {
         Log.d(tag, buildString {
@@ -145,6 +156,7 @@ class AudioSettingsHelper(private val context: Context) {
             appendLine("• TTS Habilitado: ${isTTSEnabled()}")
             appendLine("• TTS Velocidad: ${getTTSSpeed()}")
             appendLine("• TTS Tono: ${getTTSPitch()}")
+            appendLine("• Tamaño de texto: ${getTranscriptionTextSize()}sp")
         })
     }
 }
