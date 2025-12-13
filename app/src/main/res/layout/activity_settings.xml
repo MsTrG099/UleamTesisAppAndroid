@@ -416,8 +416,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="16dp"
-                        android:padding="10dp"
-                        android:background="@android:drawable/edit_text"/>
+                        android:minHeight="48dp"
+                        android:background="@drawable/spinner_background"/>
 
                     <!-- Vibración -->
                     <LinearLayout
@@ -516,8 +516,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="12dp"
-                        android:padding="10dp"
-                        android:background="@android:drawable/edit_text"/>
+                        android:minHeight="48dp"
+                        android:background="@drawable/spinner_background"/>
 
                     <!-- Tono de voz -->
                     <TextView
@@ -533,8 +533,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="16dp"
-                        android:padding="10dp"
-                        android:background="@android:drawable/edit_text"/>
+                        android:minHeight="48dp"
+                        android:background="@drawable/spinner_background"/>
 
                     <!-- Separador -->
                     <View
@@ -566,8 +566,8 @@
                         android:id="@+id/spinnerTheme"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:padding="10dp"
-                        android:background="@android:drawable/edit_text"/>
+                        android:minHeight="48dp"
+                        android:background="@drawable/spinner_background"/>
 
                 </LinearLayout>
             </androidx.cardview.widget.CardView>

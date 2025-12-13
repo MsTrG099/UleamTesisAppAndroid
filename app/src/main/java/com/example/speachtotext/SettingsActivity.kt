@@ -136,15 +136,21 @@ class SettingsActivity : AppCompatActivity() {
             "🇦🇷 Español (Argentina)",
             "🇨🇴 Español (Colombia)"
         )
-        spinnerLanguage.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, languages)
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, languages)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerLanguage.adapter = adapter
     }
 
     private fun setupTTSSpinners() {
         val speeds = arrayOf("🐢 Lento", "🚶 Normal", "🏃 Rápido")
-        spinnerTTSSpeed.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, speeds)
+        val speedAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, speeds)
+        speedAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerTTSSpeed.adapter = speedAdapter
 
         val pitches = arrayOf("🔉 Grave", "🔊 Normal", "🔔 Agudo")
-        spinnerTTSPitch.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, pitches)
+        val pitchAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, pitches)
+        pitchAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerTTSPitch.adapter = pitchAdapter
     }
 
     private fun setupThemeSpinner() {
@@ -153,7 +159,9 @@ class SettingsActivity : AppCompatActivity() {
             "🌙 Modo Oscuro",
             "🔄 Seguir sistema"
         )
-        spinnerTheme.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, themes)
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, themes)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerTheme.adapter = adapter
     }
 
     private fun loadSettings() {
