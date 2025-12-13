@@ -16,6 +16,7 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.util.Log
 import android.widget.Button
 import android.widget.ImageButton
@@ -50,9 +51,10 @@ class TranscriptionActivity : AppCompatActivity() {
     // Google SpeechRecognizer (Online)
     private var googleSpeechRecognizer: SpeechRecognizer? = null
 
-    // Text-to-Speech (TTS) - NUEVO
+    // Text-to-Speech (TTS)
     private var textToSpeech: TextToSpeech? = null
     private var isTTSInitialized = false
+    private var isTTSSpeaking = false // NUEVO: Para saber si TTS está hablando
 
     private var isListening = false
     private var isOnlineMode = false
@@ -90,7 +92,7 @@ class TranscriptionActivity : AppCompatActivity() {
         // Inicializar base de datos
         database = TranscriptionDatabase(this)
 
-        // NUEVO: Inicializar Text-to-Speech
+        // Inicializar Text-to-Speech
         initTextToSpeech()
 
         // Inicializar vistas
@@ -124,7 +126,7 @@ class TranscriptionActivity : AppCompatActivity() {
         }
     }
 
-    // NUEVO: Inicializar Text-to-Speech
+    // ACTUALIZADO: Inicializar Text-to-Speech con listener de progreso
     private fun initTextToSpeech() {
         textToSpeech = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) {
@@ -143,6 +145,7 @@ class TranscriptionActivity : AppCompatActivity() {
                 } else {
                     isTTSInitialized = true
                     configureTTS()
+                    setupTTSListener() // NUEVO: Configurar listener
                     Log.d(TAG, "✓ TTS inicializado correctamente")
                 }
             } else {
@@ -152,7 +155,38 @@ class TranscriptionActivity : AppCompatActivity() {
         }
     }
 
-    // NUEVO: Configurar parámetros de TTS
+    // NUEVO: Configurar listener para detectar cuando TTS termina de hablar
+    private fun setupTTSListener() {
+        textToSpeech?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+            override fun onStart(utteranceId: String?) {
+                isTTSSpeaking = true
+                Log.d(TAG, "🔊 TTS comenzó a hablar")
+                runOnUiThread {
+                    tvStatus.text = "🔊 Reproduciendo texto..."
+                }
+            }
+
+            override fun onDone(utteranceId: String?) {
+                isTTSSpeaking = false
+                Log.d(TAG, "✓ TTS terminó de hablar")
+                runOnUiThread {
+                    val mode = if (isOnlineMode) "Online" else "Offline"
+                    tvStatus.text = "Pausado ($mode) - Presiona Grabar para continuar"
+                    // El usuario debe presionar el botón manualmente para continuar
+                }
+            }
+
+            override fun onError(utteranceId: String?) {
+                isTTSSpeaking = false
+                Log.e(TAG, "✗ Error en TTS")
+                runOnUiThread {
+                    val mode = if (isOnlineMode) "Online" else "Offline"
+                    tvStatus.text = "Error TTS - Pausado ($mode)"
+                }
+            }
+        })
+    }
+
     private fun configureTTS() {
         if (!isTTSInitialized || textToSpeech == null) return
 
@@ -167,7 +201,7 @@ class TranscriptionActivity : AppCompatActivity() {
         Log.d(TAG, "TTS configurado: velocidad=$speed, tono=$pitch")
     }
 
-    // NUEVO: Leer texto con TTS
+    // ACTUALIZADO: Leer texto con TTS y detener micrófono
     private fun speakText(text: String) {
         if (!audioSettings.isTTSEnabled()) {
             Log.d(TAG, "TTS deshabilitado en configuración")
@@ -184,18 +218,37 @@ class TranscriptionActivity : AppCompatActivity() {
             return
         }
 
+        // NUEVO: Detener el reconocimiento antes de hablar
+        if (isListening) {
+            Log.d(TAG, "⏸️ Deteniendo reconocimiento para reproducir TTS")
+            stopListeningForTTS()
+        }
+
         // Detener cualquier lectura en progreso
         textToSpeech?.stop()
 
-        // Leer el texto
+        // Leer el texto con ID único para el listener
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "TranscriptionTTS")
+            val params = Bundle()
+            textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, params, "TranscriptionTTS_${System.currentTimeMillis()}")
         } else {
             @Suppress("DEPRECATION")
             textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null)
         }
 
         Log.d(TAG, "🔊 Leyendo transcripción: ${text.take(50)}...")
+    }
+
+    // NUEVO: Detener reconocimiento temporalmente para TTS
+    private fun stopListeningForTTS() {
+        voskSpeechService?.stop()
+        googleSpeechRecognizer?.cancel()
+
+        isListening = false
+        updateRecordButtonState()
+
+        vibrateIfEnabled()
+        playSoundIfEnabled()
     }
 
     private fun initViews() {
@@ -217,6 +270,11 @@ class TranscriptionActivity : AppCompatActivity() {
             if (isListening) {
                 stopListening()
             } else {
+                // NUEVO: Si TTS está hablando, no permitir grabar
+                if (isTTSSpeaking) {
+                    Toast.makeText(this, "⏸️ Espera a que termine de leer el texto", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
                 tvResult.text = ""
                 startListening()
             }
@@ -225,6 +283,7 @@ class TranscriptionActivity : AppCompatActivity() {
         btnClear.setOnClickListener {
             tvResult.text = ""
             textToSpeech?.stop() // Detener lectura si está en progreso
+            isTTSSpeaking = false
         }
 
         btnToggleMode.setOnClickListener {
@@ -359,8 +418,11 @@ class TranscriptionActivity : AppCompatActivity() {
         recordingStartTime = System.currentTimeMillis()
         Log.d(TAG, "Inicio de grabación: $recordingStartTime")
 
-        // NUEVO: Detener TTS si está hablando
-        textToSpeech?.stop()
+        // Detener TTS si está hablando
+        if (isTTSSpeaking) {
+            textToSpeech?.stop()
+            isTTSSpeaking = false
+        }
 
         if (isOnlineMode) {
             startGoogleSpeechRecognition()
@@ -622,7 +684,7 @@ class TranscriptionActivity : AppCompatActivity() {
             runOnUiThread {
                 tvStatus.text = "Listo ✓ (Offline)"
 
-                // NUEVO: Leer el texto completo con TTS
+                // ACTUALIZADO: Leer el texto completo con TTS (esto detendrá el micrófono)
                 val finalText = tvResult.text.toString()
                 speakText(finalText)
             }
@@ -719,8 +781,8 @@ class TranscriptionActivity : AppCompatActivity() {
                 ).show()
             }
 
-            // Reintentar automáticamente mientras no se haya detenido
-            if (isListening) {
+            // ACTUALIZADO: Solo reintentar si no hay TTS activo y sigue escuchando
+            if (isListening && !isTTSSpeaking) {
                 Log.d(TAG, "Reintentando escucha tras error...")
                 googleSpeechRecognizer?.cancel()
                 val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
@@ -734,7 +796,7 @@ class TranscriptionActivity : AppCompatActivity() {
                 }
                 googleSpeechRecognizer?.startListening(intent)
             } else {
-                Log.d(TAG, "Escucha detenida manualmente, no se reinicia.")
+                Log.d(TAG, "Escucha detenida, no se reinicia.")
             }
         }
 
@@ -753,14 +815,15 @@ class TranscriptionActivity : AppCompatActivity() {
                     }
                     tvStatus.text = "Listo ✓ (Online)"
 
-                    // NUEVO: Leer el nuevo texto con TTS
+                    // ACTUALIZADO: Leer el nuevo texto con TTS (esto detendrá el micrófono)
                     speakText(text)
                 }
             }
 
-            // Reiniciar automáticamente la escucha si no se ha detenido manualmente
-            if (isListening) {
-                Log.d(TAG, "Reiniciando escucha continua...")
+            // ACTUALIZADO: NO reiniciar automáticamente si TTS está activo
+            // El usuario debe presionar "Grabar" manualmente después de que TTS termine
+            if (isListening && !isTTSSpeaking && !audioSettings.isTTSEnabled()) {
+                Log.d(TAG, "Reiniciando escucha continua (TTS deshabilitado)...")
                 googleSpeechRecognizer?.cancel()
                 val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                     putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
@@ -773,7 +836,7 @@ class TranscriptionActivity : AppCompatActivity() {
                 }
                 googleSpeechRecognizer?.startListening(intent)
             } else {
-                Log.d(TAG, "Escucha detenida manualmente, no se reinicia.")
+                Log.d(TAG, "Escucha pausada (TTS activo o detenida manualmente).")
             }
         }
 
@@ -817,7 +880,7 @@ class TranscriptionActivity : AppCompatActivity() {
         googleSpeechRecognizer?.destroy()
         releaseAudioEffects()
 
-        // NUEVO: Liberar recursos de TTS
+        // Liberar recursos de TTS
         textToSpeech?.stop()
         textToSpeech?.shutdown()
         textToSpeech = null

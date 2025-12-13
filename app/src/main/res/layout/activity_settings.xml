@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F5F5F5">
+    android:background="@color/background_light">
 
     <!-- Header azul -->
     <LinearLayout
@@ -17,7 +17,7 @@
         android:paddingBottom="12dp"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:background="#1E88E5">
+        android:background="@color/primary_blue">
 
         <ImageButton
             android:id="@+id/btnBack"
@@ -26,7 +26,7 @@
             android:src="@android:drawable/ic_menu_revert"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="Volver"
-            android:tint="@android:color/white"/>
+            android:tint="@color/white"/>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -49,7 +49,7 @@
                 android:text="Configuraciones"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="@android:color/white"/>
+                android:textColor="@color/white"/>
         </LinearLayout>
 
         <View
@@ -75,7 +75,7 @@
                 android:layout_height="wrap_content"
                 android:text="Selecciona el perfil que mejor se adapte a tu entorno"
                 android:textSize="14sp"
-                android:textColor="#424242"
+                android:textColor="@color/text_primary"
                 android:gravity="center"
                 android:layout_marginBottom="16dp"/>
 
@@ -90,7 +90,7 @@
                 android:foreground="?android:attr/selectableItemBackground"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp"
-                app:cardBackgroundColor="@android:color/white">
+                app:cardBackgroundColor="@color/background_white">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -123,14 +123,14 @@
                                 android:text="Entorno Silencioso"
                                 android:textSize="18sp"
                                 android:textStyle="bold"
-                                android:textColor="#212121"/>
+                                android:textColor="@color/text_primary"/>
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Ideal para: Oficina, biblioteca, hogar tranquilo"
                                 android:textSize="12sp"
-                                android:textColor="#757575"
+                                android:textColor="@color/text_secondary"
                                 android:layout_marginTop="4dp"/>
 
                             <TextView
@@ -138,7 +138,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="• Sensibilidad normal\n• Sin supresión de ruido\n• Mejor calidad de audio"
                                 android:textSize="11sp"
-                                android:textColor="#424242"
+                                android:textColor="@color/text_primary"
                                 android:layout_marginTop="8dp"/>
                         </LinearLayout>
 
@@ -147,7 +147,7 @@
                             android:layout_width="24dp"
                             android:layout_height="24dp"
                             android:src="@android:drawable/checkbox_on_background"
-                            android:tint="#4CAF50"
+                            android:tint="@color/accent_green"
                             android:visibility="gone"/>
                     </LinearLayout>
                 </LinearLayout>
@@ -164,7 +164,7 @@
                 android:foreground="?android:attr/selectableItemBackground"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp"
-                app:cardBackgroundColor="@android:color/white">
+                app:cardBackgroundColor="@color/background_white">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -197,14 +197,14 @@
                                 android:text="Entorno Moderado"
                                 android:textSize="18sp"
                                 android:textStyle="bold"
-                                android:textColor="#212121"/>
+                                android:textColor="@color/text_primary"/>
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Ideal para: Aula, cafetería tranquila, reuniones"
                                 android:textSize="12sp"
-                                android:textColor="#757575"
+                                android:textColor="@color/text_secondary"
                                 android:layout_marginTop="4dp"/>
 
                             <TextView
@@ -212,7 +212,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="• Sensibilidad equilibrada\n• Supresión de ruido moderada\n• Balance calidad/claridad"
                                 android:textSize="11sp"
-                                android:textColor="#424242"
+                                android:textColor="@color/text_primary"
                                 android:layout_marginTop="8dp"/>
                         </LinearLayout>
 
@@ -221,7 +221,7 @@
                             android:layout_width="24dp"
                             android:layout_height="24dp"
                             android:src="@android:drawable/checkbox_on_background"
-                            android:tint="#4CAF50"
+                            android:tint="@color/accent_green"
                             android:visibility="gone"/>
                     </LinearLayout>
                 </LinearLayout>
@@ -238,7 +238,7 @@
                 android:foreground="?android:attr/selectableItemBackground"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp"
-                app:cardBackgroundColor="@android:color/white">
+                app:cardBackgroundColor="@color/background_white">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -271,14 +271,14 @@
                                 android:text="Entorno Ruidoso"
                                 android:textSize="18sp"
                                 android:textStyle="bold"
-                                android:textColor="#212121"/>
+                                android:textColor="@color/text_primary"/>
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Ideal para: Calle, transporte público, eventos"
                                 android:textSize="12sp"
-                                android:textColor="#757575"
+                                android:textColor="@color/text_secondary"
                                 android:layout_marginTop="4dp"/>
 
                             <TextView
@@ -286,7 +286,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="• Máxima sensibilidad\n• Supresión de ruido alta\n• Optimizado para voz clara"
                                 android:textSize="11sp"
-                                android:textColor="#424242"
+                                android:textColor="@color/text_primary"
                                 android:layout_marginTop="8dp"/>
                         </LinearLayout>
 
@@ -295,7 +295,7 @@
                             android:layout_width="24dp"
                             android:layout_height="24dp"
                             android:src="@android:drawable/checkbox_on_background"
-                            android:tint="#4CAF50"
+                            android:tint="@color/accent_green"
                             android:visibility="gone"/>
                     </LinearLayout>
                 </LinearLayout>
@@ -312,7 +312,7 @@
                 android:foreground="?android:attr/selectableItemBackground"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp"
-                app:cardBackgroundColor="@android:color/white">
+                app:cardBackgroundColor="@color/background_white">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -345,14 +345,14 @@
                                 android:text="Exterior/Viento"
                                 android:textSize="18sp"
                                 android:textStyle="bold"
-                                android:textColor="#212121"/>
+                                android:textColor="@color/text_primary"/>
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Ideal para: Parques, áreas abiertas, con viento"
                                 android:textSize="12sp"
-                                android:textColor="#757575"
+                                android:textColor="@color/text_secondary"
                                 android:layout_marginTop="4dp"/>
 
                             <TextView
@@ -360,7 +360,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="• Filtro de viento activado\n• Cancelación de eco\n• Enfoque en voz directa"
                                 android:textSize="11sp"
-                                android:textColor="#424242"
+                                android:textColor="@color/text_primary"
                                 android:layout_marginTop="8dp"/>
                         </LinearLayout>
 
@@ -369,7 +369,7 @@
                             android:layout_width="24dp"
                             android:layout_height="24dp"
                             android:src="@android:drawable/checkbox_on_background"
-                            android:tint="#4CAF50"
+                            android:tint="@color/accent_green"
                             android:visibility="gone"/>
                     </LinearLayout>
                 </LinearLayout>
@@ -382,7 +382,7 @@
                 android:text="Opciones Adicionales"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#212121"
+                android:textColor="@color/text_primary"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="12dp"/>
 
@@ -392,7 +392,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
                 app:cardCornerRadius="12dp"
-                app:cardElevation="2dp">
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="@color/background_white">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -407,7 +408,7 @@
                         android:text="🌍 Idioma de Reconocimiento"
                         android:textSize="14sp"
                         android:textStyle="bold"
-                        android:textColor="#424242"
+                        android:textColor="@color/text_primary"
                         android:layout_marginBottom="8dp"/>
 
                     <Spinner
@@ -432,7 +433,7 @@
                             android:layout_weight="1"
                             android:text="📳 Vibración al grabar"
                             android:textSize="14sp"
-                            android:textColor="#424242"/>
+                            android:textColor="@color/text_primary"/>
 
                         <Switch
                             android:id="@+id/switchVibration"
@@ -454,7 +455,7 @@
                             android:layout_weight="1"
                             android:text="🔔 Sonido al grabar"
                             android:textSize="14sp"
-                            android:textColor="#424242"/>
+                            android:textColor="@color/text_primary"/>
 
                         <Switch
                             android:id="@+id/switchSoundFeedback"
@@ -466,7 +467,7 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:background="#E0E0E0"
+                        android:background="@color/text_tertiary"
                         android:layout_marginTop="8dp"
                         android:layout_marginBottom="16dp"/>
 
@@ -477,7 +478,7 @@
                         android:text="🔊 Lectura Automática de Texto (TTS)"
                         android:textSize="14sp"
                         android:textStyle="bold"
-                        android:textColor="#424242"
+                        android:textColor="@color/text_primary"
                         android:layout_marginBottom="8dp"/>
 
                     <LinearLayout
@@ -493,7 +494,7 @@
                             android:layout_weight="1"
                             android:text="Leer transcripciones automáticamente"
                             android:textSize="13sp"
-                            android:textColor="#424242"/>
+                            android:textColor="@color/text_primary"/>
 
                         <Switch
                             android:id="@+id/switchTTS"
@@ -507,7 +508,7 @@
                         android:layout_height="wrap_content"
                         android:text="Velocidad de lectura"
                         android:textSize="13sp"
-                        android:textColor="#424242"
+                        android:textColor="@color/text_primary"
                         android:layout_marginBottom="6dp"/>
 
                     <Spinner
@@ -524,7 +525,7 @@
                         android:layout_height="wrap_content"
                         android:text="Tono de voz"
                         android:textSize="13sp"
-                        android:textColor="#424242"
+                        android:textColor="@color/text_primary"
                         android:layout_marginBottom="6dp"/>
 
                     <Spinner
@@ -535,22 +536,22 @@
                         android:padding="10dp"
                         android:background="@android:drawable/edit_text"/>
 
-                    <!-- ✅ NUEVO: Separador para Tema -->
+                    <!-- Separador -->
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:background="#E0E0E0"
+                        android:background="@color/text_tertiary"
                         android:layout_marginTop="8dp"
                         android:layout_marginBottom="16dp"/>
 
-                    <!-- ✅ NUEVO: Tema de la aplicación -->
+                    <!-- Tema de la aplicación -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="🎨 Apariencia"
                         android:textSize="14sp"
                         android:textStyle="bold"
-                        android:textColor="#424242"
+                        android:textColor="@color/text_primary"
                         android:layout_marginBottom="8dp"/>
 
                     <TextView
@@ -558,7 +559,7 @@
                         android:layout_height="wrap_content"
                         android:text="Tema de la aplicación"
                         android:textSize="13sp"
-                        android:textColor="#424242"
+                        android:textColor="@color/text_primary"
                         android:layout_marginBottom="6dp"/>
 
                     <Spinner
@@ -579,8 +580,8 @@
                 android:text="✓ Perfil seleccionado: Entorno Moderado"
                 android:textSize="13sp"
                 android:textStyle="bold"
-                android:textColor="#4CAF50"
-                android:background="#E8F5E9"
+                android:textColor="@color/accent_green"
+                android:background="@color/primary_blue_light"
                 android:padding="12dp"
                 android:gravity="center"
                 android:layout_marginBottom="80dp"/>
@@ -597,7 +598,7 @@
         android:paddingBottom="12dp"
         android:paddingStart="8dp"
         android:paddingEnd="8dp"
-        android:background="@android:color/white"
+        android:background="@color/background_white"
         android:gravity="center"
         android:weightSum="3">
 
@@ -624,7 +625,7 @@
                 android:layout_height="wrap_content"
                 android:text="Inicio"
                 android:textSize="12sp"
-                android:textColor="#757575"
+                android:textColor="@color/text_secondary"
                 android:layout_marginTop="4dp"/>
         </LinearLayout>
 
@@ -651,7 +652,7 @@
                 android:layout_height="wrap_content"
                 android:text="Historial"
                 android:textSize="12sp"
-                android:textColor="#757575"
+                android:textColor="@color/text_secondary"
                 android:layout_marginTop="4dp"/>
         </LinearLayout>
 
@@ -675,7 +676,7 @@
                 android:layout_height="wrap_content"
                 android:text="Ajustes"
                 android:textSize="12sp"
-                android:textColor="#1E88E5"
+                android:textColor="@color/primary_blue"
                 android:textStyle="bold"
                 android:layout_marginTop="4dp"/>
         </LinearLayout>

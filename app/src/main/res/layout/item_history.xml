@@ -7,7 +7,7 @@
     android:layout_margin="8dp"
     app:cardCornerRadius="12dp"
     app:cardElevation="2dp"
-    app:cardBackgroundColor="@android:color/white"
+    app:cardBackgroundColor="@color/background_white"
     android:foreground="?android:attr/selectableItemBackground">
 
     <LinearLayout
@@ -38,7 +38,7 @@
                 android:layout_weight="1"
                 android:text="19/11/2025, 10:45 p. m."
                 android:textSize="13sp"
-                android:textColor="#757575"/>
+                android:textColor="@color/text_secondary"/>
 
             <ImageButton
                 android:id="@+id/btnDelete"
@@ -47,7 +47,7 @@
                 android:src="@android:drawable/ic_menu_delete"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:contentDescription="Eliminar"
-                android:tint="#F44336"/>
+                android:tint="@color/accent_red"/>
         </LinearLayout>
 
         <!-- Texto de vista previa -->
@@ -57,7 +57,7 @@
             android:layout_height="wrap_content"
             android:text="Ejemplo de transcripción de audio."
             android:textSize="15sp"
-            android:textColor="#212121"
+            android:textColor="@color/text_primary"
             android:layout_marginBottom="12dp"/>
 
         <!-- Footer: metadata -->
@@ -81,14 +81,14 @@
                 android:layout_weight="1"
                 android:text="4s"
                 android:textSize="13sp"
-                android:textColor="#757575"/>
+                android:textColor="@color/text_secondary"/>
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:background="#E3F2FD"
+                android:background="@color/primary_blue_light"
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp"
                 android:paddingTop="4dp"
@@ -107,7 +107,7 @@
                     android:text="98%"
                     android:textSize="13sp"
                     android:textStyle="bold"
-                    android:textColor="#1E88E5"/>
+                    android:textColor="@color/primary_blue"/>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

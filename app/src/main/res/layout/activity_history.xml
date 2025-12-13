@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F5F5F5">
+    android:background="@color/background_light">
 
     <!-- Header azul -->
     <LinearLayout
@@ -13,7 +13,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:padding="16dp"
-        android:background="#1E88E5">
+        android:background="@color/primary_blue">
 
         <ImageButton
             android:id="@+id/btnBack"
@@ -22,7 +22,7 @@
             android:src="@android:drawable/ic_menu_revert"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="Volver"
-            android:tint="@android:color/white"/>
+            android:tint="@color/white"/>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -45,7 +45,7 @@
                 android:text="1 transcripción"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="@android:color/white"/>
+                android:textColor="@color/white"/>
         </LinearLayout>
 
         <View
@@ -70,7 +70,7 @@
         android:layout_weight="1"
         android:text="📭\n\nNo hay transcripciones guardadas\n\nRealiza una transcripción para verla aquí"
         android:textSize="16sp"
-        android:textColor="@android:color/darker_gray"
+        android:textColor="@color/text_secondary"
         android:gravity="center"
         android:visibility="gone"/>
 
@@ -83,7 +83,7 @@
         android:paddingBottom="12dp"
         android:paddingStart="8dp"
         android:paddingEnd="8dp"
-        android:background="@android:color/white"
+        android:background="@color/background_white"
         android:gravity="center"
         android:weightSum="3">
 
@@ -110,7 +110,7 @@
                 android:layout_height="wrap_content"
                 android:text="Inicio"
                 android:textSize="12sp"
-                android:textColor="#757575"
+                android:textColor="@color/text_secondary"
                 android:layout_marginTop="4dp"/>
         </LinearLayout>
 
@@ -134,7 +134,7 @@
                 android:layout_height="wrap_content"
                 android:text="Historial"
                 android:textSize="12sp"
-                android:textColor="#1E88E5"
+                android:textColor="@color/primary_blue"
                 android:textStyle="bold"
                 android:layout_marginTop="4dp"/>
         </LinearLayout>
@@ -162,7 +162,7 @@
                 android:layout_height="wrap_content"
                 android:text="Ajustes"
                 android:textSize="12sp"
-                android:textColor="#757575"
+                android:textColor="@color/text_secondary"
                 android:layout_marginTop="4dp"/>
         </LinearLayout>
     </LinearLayout>
