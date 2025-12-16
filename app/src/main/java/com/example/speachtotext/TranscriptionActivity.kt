@@ -54,7 +54,7 @@ class TranscriptionActivity : AppCompatActivity() {
     // Text-to-Speech (TTS)
     private var textToSpeech: TextToSpeech? = null
     private var isTTSInitialized = false
-    private var isTTSSpeaking = false // NUEVO: Para saber si TTS está hablando
+    private var isTTSSpeaking = false
 
     private var isListening = false
     private var isOnlineMode = false
@@ -98,7 +98,7 @@ class TranscriptionActivity : AppCompatActivity() {
         // Inicializar vistas
         initViews()
 
-        // NUEVO: Aplicar tamaño de texto inicial
+        // Aplicar tamaño de texto inicial
         applyTextSize()
 
         // Configurar listeners
@@ -121,8 +121,8 @@ class TranscriptionActivity : AppCompatActivity() {
         super.onResume()
         // Recargar configuración por si cambió en Settings
         audioSettings.logCurrentSettings(TAG)
-        configureTTS() // Reconfigurar TTS con nuevos ajustes
-        applyTextSize() // NUEVO: Aplicar tamaño de texto
+        configureTTS()
+        applyTextSize()
 
         // Re-evaluar el modo si no está en manual
         if (!isManualMode && !isListening) {
@@ -130,7 +130,6 @@ class TranscriptionActivity : AppCompatActivity() {
         }
     }
 
-    // ACTUALIZADO: Inicializar Text-to-Speech con listener de progreso
     private fun initTextToSpeech() {
         textToSpeech = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) {
@@ -149,7 +148,7 @@ class TranscriptionActivity : AppCompatActivity() {
                 } else {
                     isTTSInitialized = true
                     configureTTS()
-                    setupTTSListener() // NUEVO: Configurar listener
+                    setupTTSListener()
                     Log.d(TAG, "✓ TTS inicializado correctamente")
                 }
             } else {
@@ -159,7 +158,6 @@ class TranscriptionActivity : AppCompatActivity() {
         }
     }
 
-    // NUEVO: Configurar listener para detectar cuando TTS termina de hablar
     private fun setupTTSListener() {
         textToSpeech?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(utteranceId: String?) {
@@ -176,7 +174,6 @@ class TranscriptionActivity : AppCompatActivity() {
                 runOnUiThread {
                     val mode = if (isOnlineMode) "Online" else "Offline"
                     tvStatus.text = "Pausado ($mode) - Presiona Grabar para continuar"
-                    // El usuario debe presionar el botón manualmente para continuar
                 }
             }
 
@@ -194,25 +191,21 @@ class TranscriptionActivity : AppCompatActivity() {
     private fun configureTTS() {
         if (!isTTSInitialized || textToSpeech == null) return
 
-        // Configurar velocidad
         val speed = audioSettings.getTTSSpeed()
         textToSpeech?.setSpeechRate(speed)
 
-        // Configurar tono
         val pitch = audioSettings.getTTSPitch()
         textToSpeech?.setPitch(pitch)
 
         Log.d(TAG, "TTS configurado: velocidad=$speed, tono=$pitch")
     }
 
-    // NUEVO: Aplicar tamaño de texto a la transcripción
     private fun applyTextSize() {
         val textSize = audioSettings.getTranscriptionTextSize()
         tvResult.textSize = textSize
         Log.d(TAG, "Tamaño de texto aplicado: ${textSize}sp")
     }
 
-    // ACTUALIZADO: Leer texto con TTS y detener micrófono
     private fun speakText(text: String) {
         if (!audioSettings.isTTSEnabled()) {
             Log.d(TAG, "TTS deshabilitado en configuración")
@@ -229,7 +222,7 @@ class TranscriptionActivity : AppCompatActivity() {
             return
         }
 
-        // NUEVO: Detener el reconocimiento antes de hablar
+        // Detener el reconocimiento antes de hablar
         if (isListening) {
             Log.d(TAG, "⏸️ Deteniendo reconocimiento para reproducir TTS")
             stopListeningForTTS()
@@ -250,8 +243,10 @@ class TranscriptionActivity : AppCompatActivity() {
         Log.d(TAG, "🔊 Leyendo transcripción: ${text.take(50)}...")
     }
 
-    // NUEVO: Detener reconocimiento temporalmente para TTS
+    // CRÍTICO: Detener reconocimiento Y guardar en historial
     private fun stopListeningForTTS() {
+        Log.d(TAG, "⏸️ stopListeningForTTS() - Deteniendo y guardando")
+
         voskSpeechService?.stop()
         googleSpeechRecognizer?.cancel()
 
@@ -259,7 +254,9 @@ class TranscriptionActivity : AppCompatActivity() {
         updateRecordButtonState()
 
         vibrateIfEnabled()
-        playSoundIfEnabled()
+
+        // SOLUCIÓN: Guardar en historial cuando TTS detiene el reconocimiento
+        saveTranscriptionToHistory()
     }
 
     private fun initViews() {
@@ -281,7 +278,6 @@ class TranscriptionActivity : AppCompatActivity() {
             if (isListening) {
                 stopListening()
             } else {
-                // NUEVO: Si TTS está hablando, no permitir grabar
                 if (isTTSSpeaking) {
                     Toast.makeText(this, "⏸️ Espera a que termine de leer el texto", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
@@ -293,16 +289,15 @@ class TranscriptionActivity : AppCompatActivity() {
 
         btnClear.setOnClickListener {
             tvResult.text = ""
-            textToSpeech?.stop() // Detener lectura si está en progreso
+            textToSpeech?.stop()
             isTTSSpeaking = false
         }
 
         btnToggleMode.setOnClickListener {
-            stopListening() // Detiene la escucha antes de cambiar el modo
+            stopListening()
             toggleMode()
         }
 
-        // Listener para el botón de configuración
         btnSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
@@ -337,7 +332,7 @@ class TranscriptionActivity : AppCompatActivity() {
 
             if (isOnlineMode) {
                 Toast.makeText(this, "✓ Conectado - Modo Online (Google)", Toast.LENGTH_SHORT).show()
-                Log.d(TAG, "Modo Online activado automáticamente (preferencia: ${audioSettings.shouldPreferOnline()})")
+                Log.d(TAG, "Modo Online activado automáticamente")
             } else {
                 Toast.makeText(this, "✗ Sin conexión - Modo Offline (Vosk)", Toast.LENGTH_SHORT).show()
                 Log.d(TAG, "Modo Offline activado automáticamente")
@@ -425,11 +420,9 @@ class TranscriptionActivity : AppCompatActivity() {
 
         releaseAudioEffects()
 
-        // Guardar tiempo de inicio para calcular duración
         recordingStartTime = System.currentTimeMillis()
-        Log.d(TAG, "Inicio de grabación: $recordingStartTime")
+        Log.d(TAG, "📝 Inicio de grabación: $recordingStartTime")
 
-        // Detener TTS si está hablando
         if (isTTSSpeaking) {
             textToSpeech?.stop()
             isTTSSpeaking = false
@@ -463,7 +456,6 @@ class TranscriptionActivity : AppCompatActivity() {
             Log.d(TAG, "Reconocimiento Vosk iniciado")
 
             vibrateIfEnabled()
-            playSoundIfEnabled()
 
         } catch (e: IOException) {
             val errorMsg = "Error al iniciar: ${e.message}"
@@ -502,7 +494,6 @@ class TranscriptionActivity : AppCompatActivity() {
             Log.d(TAG, "Reconocimiento Google iniciado")
 
             vibrateIfEnabled()
-            playSoundIfEnabled()
 
         } catch (e: Exception) {
             Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -511,7 +502,7 @@ class TranscriptionActivity : AppCompatActivity() {
     }
 
     private fun stopListening() {
-        Log.d(TAG, "Deteniendo reconocimiento...")
+        Log.d(TAG, "⏹️ stopListening() - Deteniendo y guardando")
 
         voskSpeechService?.stop()
         voskSpeechService?.shutdown()
@@ -530,29 +521,21 @@ class TranscriptionActivity : AppCompatActivity() {
         tvStatus.text = "Detenido ($mode)"
 
         vibrateIfEnabled()
-        playSoundIfEnabled()
 
-        // Guardar en historial automáticamente
         saveTranscriptionToHistory()
     }
 
     private fun saveTranscriptionToHistory() {
         val text = tvResult.text.toString().trim()
 
-        // Solo guardar si hay texto válido (no vacío y no es el placeholder)
         if (text.isBlank() || text == "El texto aparecerá aquí...") {
-            Log.d(TAG, "No se guarda en historial: texto vacío o placeholder")
+            Log.d(TAG, "❌ No se guarda: texto vacío o placeholder")
             return
         }
 
-        // Calcular duración en segundos
         val durationMillis = System.currentTimeMillis() - recordingStartTime
         val durationSeconds = durationMillis / 1000
-
-        // Determinar modo
         val mode = if (isOnlineMode) "online" else "offline"
-
-        // Obtener configuración actual
         val language = audioSettings.getLanguageCode()
         val sampleRate = audioSettings.getSampleRate()
 
@@ -565,17 +548,17 @@ class TranscriptionActivity : AppCompatActivity() {
                 sampleRate = sampleRate.toFloat()
             )
 
-            Log.d(TAG, "✓ Transcripción guardada en historial [ID: $id, Modo: $mode, Duración: ${durationSeconds}s, Palabras: ${countWords(text)}]")
+            Log.d(TAG, "✅ Guardado en historial [ID: $id, Modo: $mode, Duración: ${durationSeconds}s, Palabras: ${countWords(text)}]")
+            Log.d(TAG, "   Texto guardado: '${text.take(50)}...'")
 
-            // Mostrar confirmación sutil
             NotificationHelper.show(
                 this,
-                "✓ Guardado en historial (${countWords(text)} palabras)"
+                "✓ Guardado (${countWords(text)} palabras)"
             )
 
         } catch (e: Exception) {
-            Log.e(TAG, "✗ Error al guardar en historial", e)
-            Toast.makeText(this, "Error al guardar en historial", Toast.LENGTH_SHORT).show()
+            Log.e(TAG, "❌ Error al guardar en historial", e)
+            Toast.makeText(this, "Error al guardar", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -600,31 +583,24 @@ class TranscriptionActivity : AppCompatActivity() {
     }
 
     private fun vibrateIfEnabled() {
-        if (audioSettings.isVibrationEnabled()) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                if (vibrator.hasVibrator()) {
-                    vibrator.vibrate(
-                        VibrationEffect.createOneShot(
-                            100,
-                            VibrationEffect.DEFAULT_AMPLITUDE
-                        )
-                    )
-                }
-            } else {
-                @Suppress("DEPRECATION")
-                vibrator.vibrate(100)
-            }
+        if (!audioSettings.isVibrationEnabled()) {
+            Log.d(TAG, "📴 Vibración desactivada - no vibra")
+            return
         }
-    }
 
-    private fun playSoundIfEnabled() {
-        if (audioSettings.isSoundFeedbackEnabled()) {
-            val toneGen = ToneGenerator(
-                AudioManager.STREAM_MUSIC,
-                100
-            )
-            toneGen.startTone(ToneGenerator.TONE_PROP_BEEP, 150)
-            toneGen.release()
+        Log.d(TAG, "📳 Vibrando")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (vibrator.hasVibrator()) {
+                vibrator.vibrate(
+                    VibrationEffect.createOneShot(
+                        100,
+                        VibrationEffect.DEFAULT_AMPLITUDE
+                    )
+                )
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(100)
         }
     }
 
@@ -695,7 +671,6 @@ class TranscriptionActivity : AppCompatActivity() {
             runOnUiThread {
                 tvStatus.text = "Listo ✓ (Offline)"
 
-                // ACTUALIZADO: Leer el texto completo con TTS (esto detendrá el micrófono)
                 val finalText = tvResult.text.toString()
                 speakText(finalText)
             }
@@ -792,7 +767,6 @@ class TranscriptionActivity : AppCompatActivity() {
                 ).show()
             }
 
-            // ACTUALIZADO: Solo reintentar si no hay TTS activo y sigue escuchando
             if (isListening && !isTTSSpeaking) {
                 Log.d(TAG, "Reintentando escucha tras error...")
                 googleSpeechRecognizer?.cancel()
@@ -826,13 +800,10 @@ class TranscriptionActivity : AppCompatActivity() {
                     }
                     tvStatus.text = "Listo ✓ (Online)"
 
-                    // ACTUALIZADO: Leer el nuevo texto con TTS (esto detendrá el micrófono)
                     speakText(text)
                 }
             }
 
-            // ACTUALIZADO: NO reiniciar automáticamente si TTS está activo
-            // El usuario debe presionar "Grabar" manualmente después de que TTS termine
             if (isListening && !isTTSSpeaking && !audioSettings.isTTSEnabled()) {
                 Log.d(TAG, "Reiniciando escucha continua (TTS deshabilitado)...")
                 googleSpeechRecognizer?.cancel()
@@ -865,7 +836,6 @@ class TranscriptionActivity : AppCompatActivity() {
         override fun onEvent(eventType: Int, params: Bundle?) {}
     }
 
-
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -885,13 +855,11 @@ class TranscriptionActivity : AppCompatActivity() {
         super.onDestroy()
         Log.d(TAG, "Destruyendo actividad...")
 
-        // Liberar recursos de reconocimiento de voz
         voskSpeechService?.stop()
         voskSpeechService?.shutdown()
         googleSpeechRecognizer?.destroy()
         releaseAudioEffects()
 
-        // Liberar recursos de TTS
         textToSpeech?.stop()
         textToSpeech?.shutdown()
         textToSpeech = null

@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -19,6 +20,7 @@ import com.example.speachtotext.database.TranscriptionRecord
 class HistoryActivity : AppCompatActivity() {
 
     private lateinit var btnBack: ImageButton
+    private lateinit var tvTranscriptionCount: TextView
     private lateinit var recyclerView: RecyclerView
     private lateinit var tvEmptyState: TextView
     private var btnBottomHome: View? = null
@@ -28,6 +30,10 @@ class HistoryActivity : AppCompatActivity() {
     private lateinit var database: TranscriptionDatabase
     private lateinit var adapter: HistoryAdapter
     private var allRecords = listOf<TranscriptionRecord>()
+
+    companion object {
+        private const val TAG = "HistoryActivity"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeHelper.applyTheme(this)
@@ -44,6 +50,7 @@ class HistoryActivity : AppCompatActivity() {
 
     private fun initViews() {
         btnBack = findViewById(R.id.btnBack)
+        tvTranscriptionCount = findViewById(R.id.tvTranscriptionCount)
         recyclerView = findViewById(R.id.recyclerViewHistory)
         tvEmptyState = findViewById(R.id.tvEmptyState)
         btnBottomHome = findViewById(R.id.btnBottomHome)
@@ -75,12 +82,24 @@ class HistoryActivity : AppCompatActivity() {
 
     private fun loadHistory() {
         allRecords = database.getAllTranscriptions()
+        Log.d(TAG, "Transcripciones cargadas: ${allRecords.size}")
+
         adapter.submitList(allRecords)
         updateEmptyState()
     }
 
     private fun updateEmptyState() {
-        if (adapter.itemCount == 0) {
+        val count = adapter.itemCount
+
+        // Actualizar contador en el header
+        tvTranscriptionCount.text = if (count == 1) {
+            "$count transcripción"
+        } else {
+            "$count transcripciones"
+        }
+
+        // Mostrar/ocultar empty state
+        if (count == 0) {
             tvEmptyState.visibility = View.VISIBLE
             recyclerView.visibility = View.GONE
         } else {
@@ -121,6 +140,7 @@ class HistoryActivity : AppCompatActivity() {
             .setMessage("¿Estás seguro de que deseas eliminar esta transcripción?")
             .setPositiveButton("Eliminar") { _, _ ->
                 database.deleteTranscription(record.id)
+                Log.d(TAG, "Transcripción eliminada - ID: ${record.id}")
                 NotificationHelper.show(this, "✓ Transcripción eliminada")
                 loadHistory()
             }
@@ -130,7 +150,7 @@ class HistoryActivity : AppCompatActivity() {
 }
 
 /**
- * Adapter actualizado para el nuevo diseño
+ * Adapter para mostrar el historial de transcripciones
  */
 class HistoryAdapter(
     private val onItemClick: (TranscriptionRecord) -> Unit,

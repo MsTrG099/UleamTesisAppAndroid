@@ -2,6 +2,7 @@ package com.example.speachtotext
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.*
 import androidx.activity.OnBackPressedCallback
@@ -22,7 +23,6 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var checkOutdoor: ImageView
     private lateinit var spinnerLanguage: Spinner
     private lateinit var switchVibration: Switch
-    private lateinit var switchSoundFeedback: Switch
     private lateinit var tvSelectedProfile: TextView
 
     // Views para TTS
@@ -33,7 +33,7 @@ class SettingsActivity : AppCompatActivity() {
     // Views para tema
     private lateinit var spinnerTheme: Spinner
 
-    // NUEVO: View para tamaño de texto
+    // View para tamaño de texto
     private lateinit var spinnerTextSize: Spinner
 
     // Navegación inferior
@@ -42,6 +42,10 @@ class SettingsActivity : AppCompatActivity() {
 
     // Perfil seleccionado
     private var selectedProfile = "moderate"
+
+    companion object {
+        private const val TAG = "SettingsActivity"
+    }
 
     // Perfiles de configuración
     data class AudioProfile(
@@ -92,13 +96,13 @@ class SettingsActivity : AppCompatActivity() {
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        ThemeHelper.applyTheme(this)  // ✅ Aplicar tema ANTES de setContentView
+        ThemeHelper.applyTheme(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
 
         initViews()
         setupLanguageSpinner()
-        setupTextSizeSpinner() // NUEVO
+        setupTextSizeSpinner()
         setupTTSSpinners()
         setupThemeSpinner()
         loadSettings()
@@ -118,7 +122,6 @@ class SettingsActivity : AppCompatActivity() {
         checkOutdoor = findViewById(R.id.checkOutdoor)
         spinnerLanguage = findViewById(R.id.spinnerLanguage)
         switchVibration = findViewById(R.id.switchVibration)
-        switchSoundFeedback = findViewById(R.id.switchSoundFeedback)
         tvSelectedProfile = findViewById(R.id.tvSelectedProfile)
 
         // Views de TTS
@@ -129,7 +132,7 @@ class SettingsActivity : AppCompatActivity() {
         // View de tema
         spinnerTheme = findViewById(R.id.spinnerTheme)
 
-        // NUEVO: View de tamaño de texto
+        // View de tamaño de texto
         spinnerTextSize = findViewById(R.id.spinnerTextSize)
 
         btnBottomHome = findViewById(R.id.btnBottomHome)
@@ -148,7 +151,6 @@ class SettingsActivity : AppCompatActivity() {
         spinnerLanguage.adapter = adapter
     }
 
-    // NUEVO: Configurar spinner de tamaño de texto
     private fun setupTextSizeSpinner() {
         val textSizes = arrayOf(
             "📏 Pequeño",
@@ -191,26 +193,28 @@ class SettingsActivity : AppCompatActivity() {
         val languageIndex = prefs.getInt("language", 0)
         spinnerLanguage.setSelection(languageIndex)
 
-        // NUEVO: Cargar tamaño de texto
-        val textSizeIndex = prefs.getInt("textSize", 1) // Default: Normal (índice 1)
+        val textSizeIndex = prefs.getInt("textSize", 1)
         spinnerTextSize.setSelection(textSizeIndex)
 
-        switchVibration.isChecked = prefs.getBoolean("vibration", true)
-        switchSoundFeedback.isChecked = prefs.getBoolean("soundFeedback", false)
+        // Cargar estado de vibración
+        val vibrationEnabled = prefs.getBoolean("vibration", true)
+        switchVibration.isChecked = vibrationEnabled
+
+        Log.d(TAG, "⚙️ Configuración cargada:")
+        Log.d(TAG, "  - Vibración: $vibrationEnabled")
 
         // Cargar configuración de TTS
         switchTTS.isChecked = prefs.getBoolean("enableTTS", true)
         spinnerTTSSpeed.setSelection(prefs.getInt("ttsSpeed", 1))
         spinnerTTSPitch.setSelection(prefs.getInt("ttsPitch", 1))
 
-        // ✅ ACTUALIZADO: Usar ThemeHelper para cargar el tema
         spinnerTheme.setSelection(ThemeHelper.getCurrentThemeIndex(this))
 
         updateProfileSelection(selectedProfile)
     }
 
     private fun setupListeners() {
-        btnBack.setOnClickListener { finish() }
+        btnBack.setOnClickListener { saveAndFinish() }
 
         cardSilent.setOnClickListener { selectProfile("silent") }
         cardModerate.setOnClickListener { selectProfile("moderate") }
@@ -230,7 +234,6 @@ class SettingsActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
         }
 
-        // NUEVO: Listener para tamaño de texto
         spinnerTextSize.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
                 saveSettings()
@@ -238,8 +241,11 @@ class SettingsActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
         }
 
-        switchVibration.setOnCheckedChangeListener { _, _ -> saveSettings() }
-        switchSoundFeedback.setOnCheckedChangeListener { _, _ -> saveSettings() }
+        // Listener de vibración
+        switchVibration.setOnCheckedChangeListener { _, isChecked ->
+            Log.d(TAG, "🔄 Switch vibración cambiado a: $isChecked")
+            saveSettings()
+        }
 
         // Listeners de TTS
         switchTTS.setOnCheckedChangeListener { _, isChecked ->
@@ -262,7 +268,6 @@ class SettingsActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
         }
 
-        // ✅ ACTUALIZADO: Listener de tema simplificado
         spinnerTheme.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
                 applyTheme(position)
@@ -271,9 +276,7 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    // ✅ ACTUALIZADO: Usar ThemeHelper para aplicar el tema
     private fun applyTheme(themeIndex: Int) {
-        // Usar ThemeHelper para guardar y aplicar
         ThemeHelper.saveAndApplyTheme(this, themeIndex)
 
         val themeName = when(themeIndex) {
@@ -351,11 +354,18 @@ class SettingsActivity : AppCompatActivity() {
         editor.putBoolean("preferOnline", profile.preferOnline)
 
         editor.putInt("language", spinnerLanguage.selectedItemPosition)
-        editor.putBoolean("vibration", switchVibration.isChecked)
-        editor.putBoolean("soundFeedback", switchSoundFeedback.isChecked)
-
-        // NUEVO: Guardar tamaño de texto
         editor.putInt("textSize", spinnerTextSize.selectedItemPosition)
+
+        // Guardar vibración
+        val vibrationValue = switchVibration.isChecked
+        editor.putBoolean("vibration", vibrationValue)
+
+        // Siempre guardar sonido como false (deshabilitado permanentemente)
+        editor.putBoolean("soundFeedback", false)
+
+        Log.d(TAG, "💾 Guardando configuración:")
+        Log.d(TAG, "  - Vibración: $vibrationValue")
+        Log.d(TAG, "  - Sonido: false (deshabilitado)")
 
         // Guardar configuración de TTS
         editor.putBoolean("enableTTS", switchTTS.isChecked)
