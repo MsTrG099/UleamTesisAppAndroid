@@ -44,6 +44,9 @@ class TranscriptionActivity : AppCompatActivity() {
     private lateinit var btnClear: Button
     private lateinit var btnSettings: ImageButton
 
+    // NUEVO: Botón de reproducir TTS
+    private lateinit var btnReplayTTS: ImageButton
+
     // Vosk (Offline)
     private var voskModel: Model? = null
     private var voskSpeechService: SpeechService? = null
@@ -115,6 +118,9 @@ class TranscriptionActivity : AppCompatActivity() {
 
         // Log de configuración actual (debug)
         audioSettings.logCurrentSettings(TAG)
+
+        // NUEVO: Actualizar visibilidad del botón TTS
+        updateReplayButtonVisibility()
     }
 
     override fun onResume() {
@@ -128,6 +134,9 @@ class TranscriptionActivity : AppCompatActivity() {
         if (!isManualMode && !isListening) {
             checkConnectionAndSetMode()
         }
+
+        // NUEVO: Actualizar visibilidad del botón TTS
+        updateReplayButtonVisibility()
     }
 
     private fun initTextToSpeech() {
@@ -165,6 +174,7 @@ class TranscriptionActivity : AppCompatActivity() {
                 Log.d(TAG, "🔊 TTS comenzó a hablar")
                 runOnUiThread {
                     tvStatus.text = "🔊 Reproduciendo texto..."
+                    updateReplayButtonState(true) // NUEVO: Deshabilitar mientras habla
                 }
             }
 
@@ -174,6 +184,7 @@ class TranscriptionActivity : AppCompatActivity() {
                 runOnUiThread {
                     val mode = if (isOnlineMode) "Online" else "Offline"
                     tvStatus.text = "Pausado ($mode) - Presiona Grabar para continuar"
+                    updateReplayButtonState(false) // NUEVO: Rehabilitar
                 }
             }
 
@@ -183,6 +194,7 @@ class TranscriptionActivity : AppCompatActivity() {
                 runOnUiThread {
                     val mode = if (isOnlineMode) "Online" else "Offline"
                     tvStatus.text = "Error TTS - Pausado ($mode)"
+                    updateReplayButtonState(false) // NUEVO: Rehabilitar
                 }
             }
         })
@@ -267,6 +279,9 @@ class TranscriptionActivity : AppCompatActivity() {
         btnRecord = findViewById(R.id.btnRecord)
         btnClear = findViewById(R.id.btnClear)
         btnSettings = findViewById(R.id.btnSettings)
+
+        // NUEVO: Inicializar botón de reproducir TTS
+        btnReplayTTS = findViewById(R.id.btnReplayTTS)
     }
 
     private fun setupListeners() {
@@ -291,6 +306,7 @@ class TranscriptionActivity : AppCompatActivity() {
             tvResult.text = ""
             textToSpeech?.stop()
             isTTSSpeaking = false
+            updateReplayButtonVisibility() // NUEVO: Actualizar visibilidad
         }
 
         btnToggleMode.setOnClickListener {
@@ -301,6 +317,42 @@ class TranscriptionActivity : AppCompatActivity() {
         btnSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
+
+        // NUEVO: Listener del botón de reproducir TTS
+        btnReplayTTS.setOnClickListener {
+            if (isTTSSpeaking) {
+                Toast.makeText(this, "⏸️ Ya se está reproduciendo el audio", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val text = tvResult.text.toString()
+            if (text.isNotBlank() && text != "El texto aparecerá aquí...") {
+                vibrateIfEnabled()
+                speakText(text)
+            }
+        }
+    }
+
+    // NUEVO: Actualizar visibilidad del botón de replay según configuración TTS y contenido
+    private fun updateReplayButtonVisibility() {
+        val ttsEnabled = audioSettings.isTTSEnabled()
+        val hasText = tvResult.text.toString().let {
+            it.isNotBlank() && it != "El texto aparecerá aquí..."
+        }
+
+        btnReplayTTS.visibility = if (ttsEnabled && hasText) {
+            android.view.View.VISIBLE
+        } else {
+            android.view.View.GONE
+        }
+
+        Log.d(TAG, "Botón Replay TTS: visible=${btnReplayTTS.visibility == android.view.View.VISIBLE}, TTS=$ttsEnabled, texto=$hasText")
+    }
+
+    // NUEVO: Actualizar estado del botón (habilitado/deshabilitado) mientras TTS habla
+    private fun updateReplayButtonState(speaking: Boolean) {
+        btnReplayTTS.isEnabled = !speaking
+        btnReplayTTS.alpha = if (speaking) 0.5f else 1.0f
     }
 
     private fun checkPermissions() {
@@ -673,6 +725,7 @@ class TranscriptionActivity : AppCompatActivity() {
 
                 val finalText = tvResult.text.toString()
                 speakText(finalText)
+                updateReplayButtonVisibility() // NUEVO: Actualizar visibilidad
             }
         }
 
@@ -801,6 +854,7 @@ class TranscriptionActivity : AppCompatActivity() {
                     tvStatus.text = "Listo ✓ (Online)"
 
                     speakText(text)
+                    updateReplayButtonVisibility() // NUEVO: Actualizar visibilidad
                 }
             }
 
