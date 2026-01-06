@@ -241,6 +241,120 @@ class TranscriptionDatabase(context: Context) :
     }
 
     /**
+     * NUEVO: Búsqueda avanzada combinando múltiples filtros
+     */
+    fun searchTranscriptionsAdvanced(
+        keyword: String? = null,
+        mode: String? = null,
+        startDate: Long? = null,
+        endDate: Long? = null
+    ): List<TranscriptionRecord> {
+        val transcriptions = mutableListOf<TranscriptionRecord>()
+        val db = readableDatabase
+
+        // Construir condiciones WHERE dinámicamente
+        val conditions = mutableListOf<String>()
+        val args = mutableListOf<String>()
+
+        // Filtro por palabra clave
+        if (!keyword.isNullOrBlank()) {
+            conditions.add("$COLUMN_TEXT LIKE ?")
+            args.add("%$keyword%")
+        }
+
+        // Filtro por modo
+        if (!mode.isNullOrBlank() && mode != "todos") {
+            conditions.add("$COLUMN_MODE = ?")
+            args.add(mode)
+        }
+
+        // Filtro por rango de fechas
+        if (startDate != null && endDate != null) {
+            conditions.add("$COLUMN_TIMESTAMP BETWEEN ? AND ?")
+            args.add(startDate.toString())
+            args.add(endDate.toString())
+        }
+
+        val whereClause = if (conditions.isNotEmpty()) {
+            conditions.joinToString(" AND ")
+        } else {
+            null
+        }
+
+        val cursor: Cursor? = db.query(
+            TABLE_TRANSCRIPTIONS,
+            null,
+            whereClause,
+            if (args.isNotEmpty()) args.toTypedArray() else null,
+            null,
+            null,
+            "$COLUMN_TIMESTAMP DESC"
+        )
+
+        cursor?.use {
+            while (it.moveToNext()) {
+                transcriptions.add(cursorToTranscription(it))
+            }
+        }
+
+        db.close()
+        return transcriptions
+    }
+
+    /**
+     * NUEVO: Obtiene transcripciones de hoy
+     */
+    fun getTodayTranscriptions(): List<TranscriptionRecord> {
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val startOfDay = calendar.timeInMillis
+
+        calendar.add(Calendar.DAY_OF_MONTH, 1)
+        val endOfDay = calendar.timeInMillis - 1
+
+        return getTranscriptionsByDateRange(startOfDay, endOfDay)
+    }
+
+    /**
+     * NUEVO: Obtiene transcripciones de esta semana
+     */
+    fun getThisWeekTranscriptions(): List<TranscriptionRecord> {
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.DAY_OF_WEEK, calendar.firstDayOfWeek)
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val startOfWeek = calendar.timeInMillis
+
+        calendar.add(Calendar.WEEK_OF_YEAR, 1)
+        val endOfWeek = calendar.timeInMillis - 1
+
+        return getTranscriptionsByDateRange(startOfWeek, endOfWeek)
+    }
+
+    /**
+     * NUEVO: Obtiene transcripciones de este mes
+     */
+    fun getThisMonthTranscriptions(): List<TranscriptionRecord> {
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.DAY_OF_MONTH, 1)
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val startOfMonth = calendar.timeInMillis
+
+        calendar.add(Calendar.MONTH, 1)
+        val endOfMonth = calendar.timeInMillis - 1
+
+        return getTranscriptionsByDateRange(startOfMonth, endOfMonth)
+    }
+
+    /**
      * Elimina una transcripción por ID
      */
     fun deleteTranscription(id: Long): Int {
@@ -261,42 +375,56 @@ class TranscriptionDatabase(context: Context) :
     }
 
     /**
-     * Obtiene estadísticas generales
+     * ACTUALIZADO: Obtiene estadísticas completas del historial
      */
     fun getStatistics(): TranscriptionStatistics {
         val db = readableDatabase
-        val cursor: Cursor? = db.rawQuery(
-            """
+
+        var totalCount = 0
+        var onlineCount = 0
+        var offlineCount = 0
+        var totalWords = 0
+        var totalDuration = 0L
+        var oldestTimestamp = 0L
+        var newestTimestamp = 0L
+
+        val cursor = db.rawQuery("""
             SELECT 
-                COUNT(*) as total_count,
-                SUM($COLUMN_WORD_COUNT) as total_words,
-                SUM($COLUMN_DURATION_SECONDS) as total_duration,
+                COUNT(*) as total,
                 SUM(CASE WHEN $COLUMN_MODE = 'online' THEN 1 ELSE 0 END) as online_count,
                 SUM(CASE WHEN $COLUMN_MODE = 'offline' THEN 1 ELSE 0 END) as offline_count,
-                AVG($COLUMN_WORD_COUNT) as avg_words,
-                AVG($COLUMN_DURATION_SECONDS) as avg_duration
+                SUM($COLUMN_WORD_COUNT) as total_words,
+                SUM($COLUMN_DURATION_SECONDS) as total_duration,
+                MIN($COLUMN_TIMESTAMP) as oldest,
+                MAX($COLUMN_TIMESTAMP) as newest
             FROM $TABLE_TRANSCRIPTIONS
-            """.trimIndent(),
-            null
-        )
+        """, null)
 
-        var stats = TranscriptionStatistics()
         cursor?.use {
             if (it.moveToFirst()) {
-                stats = TranscriptionStatistics(
-                    totalCount = it.getInt(0),
-                    totalWords = it.getInt(1),
-                    totalDurationSeconds = it.getLong(2),
-                    onlineCount = it.getInt(3),
-                    offlineCount = it.getInt(4),
-                    avgWords = it.getDouble(5),
-                    avgDuration = it.getDouble(6)
-                )
+                totalCount = it.getInt(0)
+                onlineCount = it.getInt(1)
+                offlineCount = it.getInt(2)
+                totalWords = it.getInt(3)
+                totalDuration = it.getLong(4)
+                oldestTimestamp = it.getLong(5)
+                newestTimestamp = it.getLong(6)
             }
         }
 
         db.close()
-        return stats
+
+        return TranscriptionStatistics(
+            totalCount = totalCount,
+            onlineCount = onlineCount,
+            offlineCount = offlineCount,
+            totalWords = totalWords,
+            totalDurationSeconds = totalDuration,
+            averageWordsPerTranscription = if (totalCount > 0) totalWords / totalCount else 0,
+            averageDurationSeconds = if (totalCount > 0) totalDuration / totalCount else 0,
+            oldestTimestamp = oldestTimestamp,
+            newestTimestamp = newestTimestamp
+        )
     }
 
     /**
@@ -365,7 +493,7 @@ data class TranscriptionRecord(
 }
 
 /**
- * Clase de datos para estadísticas
+ * ACTUALIZADA: Clase de datos para estadísticas completas
  */
 data class TranscriptionStatistics(
     val totalCount: Int = 0,
@@ -373,8 +501,10 @@ data class TranscriptionStatistics(
     val totalDurationSeconds: Long = 0,
     val onlineCount: Int = 0,
     val offlineCount: Int = 0,
-    val avgWords: Double = 0.0,
-    val avgDuration: Double = 0.0
+    val averageWordsPerTranscription: Int = 0,
+    val averageDurationSeconds: Long = 0,
+    val oldestTimestamp: Long = 0,
+    val newestTimestamp: Long = 0
 ) {
     fun getFormattedTotalDuration(): String {
         val hours = totalDurationSeconds / 3600
@@ -386,5 +516,25 @@ data class TranscriptionStatistics(
             minutes > 0 -> String.format("%dm %02ds", minutes, seconds)
             else -> String.format("%ds", seconds)
         }
+    }
+
+    fun getFormattedAverageDuration(): String {
+        val hours = averageDurationSeconds / 3600
+        val minutes = (averageDurationSeconds % 3600) / 60
+        val seconds = averageDurationSeconds % 60
+
+        return when {
+            hours > 0 -> String.format("%dh %02dm %02ds", hours, minutes, seconds)
+            minutes > 0 -> String.format("%dm %02ds", minutes, seconds)
+            else -> String.format("%ds", seconds)
+        }
+    }
+
+    fun getOnlinePercentage(): Int {
+        return if (totalCount > 0) (onlineCount * 100) / totalCount else 0
+    }
+
+    fun getOfflinePercentage(): Int {
+        return if (totalCount > 0) (offlineCount * 100) / totalCount else 0
     }
 }

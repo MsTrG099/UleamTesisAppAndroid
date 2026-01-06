@@ -4,54 +4,150 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/background_light">
+    android:background="@color/background_white">
 
-    <!-- Header azul -->
+    <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical"
         android:padding="16dp"
-        android:background="@color/primary_blue">
+        android:background="@color/primary_blue"
+        android:gravity="center_vertical">
 
         <ImageButton
             android:id="@+id/btnBack"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:src="@android:drawable/ic_menu_revert"
             android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Volver"
-            android:tint="@color/white"/>
+            android:contentDescription="Volver"/>
 
-        <TextView
-            android:id="@+id/tvTranscriptionCount"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="0 transcripciones"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="@color/white"
-            android:gravity="center"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"/>
+            android:orientation="vertical"
+            android:layout_marginStart="12dp">
 
-        <View
-            android:layout_width="40dp"
-            android:layout_height="40dp"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Historial"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"/>
+
+            <TextView
+                android:id="@+id/tvTranscriptionCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 transcripciones"
+                android:textSize="14sp"
+                android:textColor="@color/white"
+                android:alpha="0.9"/>
+        </LinearLayout>
     </LinearLayout>
 
-    <!-- RecyclerView para historial -->
+    <!-- Barra de búsqueda -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:background="@color/background_light"
+        android:gravity="center_vertical">
+
+        <EditText
+            android:id="@+id/etSearch"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:hint="🔍 Buscar en transcripciones..."
+            android:padding="12dp"
+            android:background="@color/background_white"
+            android:textSize="16sp"
+            android:singleLine="true"/>
+
+        <ImageButton
+            android:id="@+id/btnClearSearch"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Limpiar búsqueda"
+            android:visibility="gone"
+            android:layout_marginStart="8dp"/>
+    </LinearLayout>
+
+    <!-- Filtros -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:background="@color/background_light"
+        android:gravity="center_vertical">
+
+        <Spinner
+            android:id="@+id/spinnerMode"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"/>
+
+        <Button
+            android:id="@+id/btnDateFilter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📅 Filtrar por fecha"
+            android:textSize="12sp"
+            android:backgroundTint="@color/primary_blue"
+            android:layout_marginStart="8dp"
+            style="?android:attr/buttonStyleSmall"/>
+    </LinearLayout>
+
+    <!-- Botones de acción -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="8dp"
+        android:background="@color/background_light"
+        android:gravity="center_vertical">
+
+        <Button
+            android:id="@+id/btnClearFilters"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="🗑️ Limpiar"
+            android:textSize="12sp"
+            android:backgroundTint="@color/text_secondary"
+            style="?android:attr/buttonStyleSmall"/>
+
+        <Button
+            android:id="@+id/btnShowStats"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="📊 Estadísticas"
+            android:textSize="12sp"
+            android:backgroundTint="@color/accent_orange"
+            android:layout_marginStart="8dp"
+            style="?android:attr/buttonStyleSmall"/>
+    </LinearLayout>
+
+    <!-- Lista de transcripciones -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewHistory"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="8dp"
-        android:clipToPadding="false"/>
+        android:padding="8dp"/>
 
-    <!-- Empty State -->
+    <!-- Estado vacío -->
     <TextView
         android:id="@+id/tvEmptyState"
         android:layout_width="match_parent"
