@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "speachtotext"
+rootProject.name = "VIVA App"
 include(":app")
  
